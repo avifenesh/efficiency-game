@@ -1,23 +1,29 @@
-import os, strutils, json, threadpool
+import os, json, threadpool, std/cpuinfo, strutils
 
 type
   WorkerResult = tuple[errors: int, warnings: int]
 
+{.push inline.}
 proc isAsciiAlnum(c: char): bool =
   (c >= '0' and c <= '9') or (c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')
+{.pop.}
+
+# Import C's strstr for optimized string search
+proc c_strstr(haystack, needle: cstring): cstring {.importc: "strstr", header: "<string.h>".}
 
 proc containsWord(line: string, word: string): bool =
+  let wordCstr = cstring(word)
+  let lineCstr = cstring(line)
   let n = word.len
   let m = line.len
+
   if n == 0 or m < n:
     return false
 
-  var start = 0
-  while start <= m - n:
-    let idx = line.find(word, start)
-    if idx == -1:
-      return false
-
+  # Use C's strstr which is often SIMD-optimized
+  var pos = c_strstr(lineCstr, wordCstr)
+  while pos != nil:
+    let idx = cast[int](pos) - cast[int](lineCstr)
     let before = idx - 1
     let after = idx + n
     let startOk = before < 0 or not isAsciiAlnum(line[before])
@@ -26,7 +32,8 @@ proc containsWord(line: string, word: string): bool =
     if startOk and endOk:
       return true
 
-    start = idx + 1
+    # Search from next position
+    pos = c_strstr(cast[cstring](cast[int](pos) + 1), wordCstr)
 
   return false
 
@@ -35,9 +42,11 @@ proc processChunk(lines: seq[string], startIdx: int, endIdx: int): WorkerResult 
   var warnings = 0
 
   for i in startIdx..endIdx:
-    if containsWord(lines[i], "ERROR"):
+    let line = lines[i]
+    # Early exit: check if chars exist before expensive boundary check
+    if 'E' in line and containsWord(line, "ERROR"):
       errors += 1
-    elif containsWord(lines[i], "WARN"):
+    elif 'W' in line and containsWord(line, "WARN"):
       warnings += 1
 
   return (errors, warnings)
@@ -61,11 +70,11 @@ proc main() =
     echo """{"errors": 0, "warnings": 0, "total": 0}"""
     quit(0)
 
-  # Use 4 threads for processing
-  const numThreads = 4
+  # Use CPU count for thread pool
+  let numThreads = min(max(1, countProcessors()), n)
   let chunkSize = (n + numThreads - 1) div numThreads
 
-  var results: array[numThreads, FlowVar[WorkerResult]]
+  var results = newSeq[FlowVar[WorkerResult]](numThreads)
   var threadCount = 0
 
   for t in 0..<numThreads:

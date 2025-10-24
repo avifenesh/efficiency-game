@@ -12,57 +12,7 @@ if (!file_exists($logfile)) {
     exit(1);
 }
 
-function isAsciiAlnum($c) {
-    return ($c >= '0' && $c <= '9') || ($c >= 'A' && $c <= 'Z') || ($c >= 'a' && $c <= 'z');
-}
-
-function containsWord($line, $word) {
-    $n = strlen($word);
-    $m = strlen($line);
-
-    if ($n === 0 || $m < $n) {
-        return false;
-    }
-
-    $start = 0;
-    while (true) {
-        $idx = strpos($line, $word, $start);
-        if ($idx === false) {
-            return false;
-        }
-
-        $before = $idx - 1;
-        $after = $idx + $n;
-        $startOk = $before < 0 || !isAsciiAlnum($line[$before]);
-        $endOk = $after >= $m || !isAsciiAlnum($line[$after]);
-
-        if ($startOk && $endOk) {
-            return true;
-        }
-
-        $start = $idx + 1;
-    }
-
-    return false;
-}
-
-function processChunk($lines, $startIdx, $endIdx) {
-    $errors = 0;
-    $warnings = 0;
-
-    for ($i = $startIdx; $i <= $endIdx; $i++) {
-        if (containsWord($lines[$i], 'ERROR')) {
-            $errors++;
-        } elseif (containsWord($lines[$i], 'WARN')) {
-            $warnings++;
-        }
-    }
-
-    return [$errors, $warnings];
-}
-
-// Read all lines
-$lines = file($logfile, FILE_IGNORE_NEW_LINES);
+$lines = file($logfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 $n = count($lines);
 
 if ($n === 0) {
@@ -70,49 +20,15 @@ if ($n === 0) {
     exit(0);
 }
 
-// Check if parallel extension is available
-if (extension_loaded('parallel')) {
-    $numThreads = 4;
-    $chunkSize = (int)ceil($n / $numThreads);
-    $futures = [];
+$totalErrors = 0;
+$totalWarnings = 0;
 
-    for ($t = 0; $t < $numThreads; $t++) {
-        $startIdx = $t * $chunkSize;
-        if ($startIdx >= $n) {
-            break;
-        }
-        $endIdx = min(($t + 1) * $chunkSize - 1, $n - 1);
-
-        $runtime = new \parallel\Runtime();
-        $chunk = array_slice($lines, $startIdx, $endIdx - $startIdx + 1);
-
-        $futures[] = $runtime->run(function($chunk) {
-            $errors = 0;
-            $warnings = 0;
-
-            foreach ($chunk as $line) {
-                if (strpos($line, 'ERROR') !== false) {
-                    $errors++;
-                } elseif (strpos($line, 'WARN') !== false) {
-                    $warnings++;
-                }
-            }
-
-            return [$errors, $warnings];
-        }, [$chunk]);
+for ($i = 0; $i < $n; $i++) {
+    if (preg_match('/\bERROR\b/', $lines[$i])) {
+        $totalErrors++;
+    } elseif (preg_match('/\bWARN\b/', $lines[$i])) {
+        $totalWarnings++;
     }
-
-    $totalErrors = 0;
-    $totalWarnings = 0;
-
-    foreach ($futures as $future) {
-        list($errors, $warnings) = $future->value();
-        $totalErrors += $errors;
-        $totalWarnings += $warnings;
-    }
-} else {
-    // Fallback: single-threaded processing
-    list($totalErrors, $totalWarnings) = processChunk($lines, 0, $n - 1);
 }
 
 $total = $totalErrors + $totalWarnings;

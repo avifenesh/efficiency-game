@@ -7,19 +7,19 @@ A comprehensive benchmark comparing the execution efficiency of multiple program
 This project measures and compares the performance (execution time, memory usage, CPU utilization) of different programming languages when processing log files to detect and count anomalies (ERROR and WARN patterns). For collaboration roles and handoff expectations, see `AGENTS.md`.
 
 ### Current Languages Tested (13)
-- ✅ **Rust** - 0.022s (Fastest!)
-- ✅ **C** - 0.028s
-- ✅ **Nim** - 0.036s
-- ✅ **C++** - 0.044s
-- ✅ **C#** - 0.082s
-- ✅ **PHP** - 0.098s
-- ✅ **Java** - 0.102s
-- ✅ **Node.js** - 0.126s
-- ✅ **Kotlin** - 0.148s
-- ✅ **Ruby** - 0.162s
-- ✅ **Python** - 0.242s
-- ✅ **Julia** - 0.464s
-- ✅ **Elixir** - 0.514s
+- ✅ **Rust** - 0.026s (Fastest!)
+- ✅ **C** - 0.032s
+- ✅ **C++** - 0.040s
+- ✅ **Node.js** - 0.056s
+- ✅ **C#** - 0.080s
+- ✅ **PHP** - 0.084s
+- ✅ **Java** - 0.100s
+- ✅ **Ruby** - 0.142s
+- ✅ **Kotlin** - 0.152s
+- ✅ **Python** - 0.236s
+- ✅ **Elixir** - 0.462s
+- ✅ **Julia** - 0.562s
+- ✅ **Nim** - Varies (outlier first run)
 
 ## 📊 Results
 
@@ -31,19 +31,18 @@ open web/index.html
 ### Current Benchmark Results (Medium Dataset - 100K lines)
 | Rank | Language | Avg Time | Avg Memory | Speed Multiplier |
 |------|----------|----------|------------|------------------|
-| 🥇 | Rust | 0.022s | 10.62 MB | 1.0x |
-| 🥈 | C | 0.028s | 8.36 MB | 1.3x |
-| 🥉 | Nim | 0.036s | 34.22 MB | 1.6x |
-| 4 | C++ | 0.044s | 12.99 MB | 2.0x |
-| 5 | C# | 0.082s | 46.43 MB | 3.7x |
-| 6 | PHP | 0.098s | 35.76 MB | 4.5x |
-| 7 | Java | 0.102s | 51.59 MB | 4.6x |
-| 8 | Node.js | 0.126s | 203.87 MB | 5.7x |
-| 9 | Kotlin | 0.148s | 58.95 MB | 6.7x |
-| 10 | Ruby | 0.162s | 45.22 MB | 7.4x |
-| 11 | Python | 0.242s | 42.10 MB | 11.0x |
-| 12 | Julia | 0.464s | 271.01 MB | 21.1x |
-| 13 | Elixir | 0.514s | 95.55 MB | 23.4x |
+| 🥇 | Rust | 0.026s | 10.59 MB | 1.0x |
+| 🥈 | C | 0.032s | 8.39 MB | 1.2x |
+| 🥉 | C++ | 0.040s | 13.04 MB | 1.5x |
+| 4 | Node.js | 0.056s | 66.44 MB | 2.2x |
+| 5 | C# | 0.080s | 46.43 MB | 3.1x |
+| 6 | PHP | 0.084s | 35.96 MB | 3.2x |
+| 7 | Java | 0.100s | 52.49 MB | 3.8x |
+| 8 | Ruby | 0.142s | 40.76 MB | 5.5x |
+| 9 | Kotlin | 0.152s | 58.35 MB | 5.8x |
+| 10 | Python | 0.236s | 40.50 MB | 9.1x |
+| 11 | Elixir | 0.462s | 94.32 MB | 17.8x |
+| 12 | Julia | 0.562s | 273.83 MB | 21.6x |
 
 ## 🚀 Quick Start
 

@@ -9,46 +9,26 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
+        <!-- Hero -->
         <header class="header">
             <div class="header-content">
-                <h1 class="title">⚡ Language Efficiency Race</h1>
-                <p class="subtitle">Concurrent Log Anomaly Detection Benchmark</p>
-                <div class="metadata" id="metadata"></div>
+                <div class="hero-text">
+                    <h1 class="title">⚡ Language Efficiency Race</h1>
+                    <p class="subtitle">Concurrent log anomaly detection benchmark</p>
+                </div>
+                <div class="hero-meta">
+                    <div class="meta-line" id="metadata"></div>
+                    <div class="meta-line" id="hero-summary"></div>
+                </div>
             </div>
         </header>
-
-        <!-- Summary Stats -->
-        <section class="summary">
-            <div class="stat-card">
-                <div class="stat-icon">🏆</div>
-                <div class="stat-content">
-                    <div class="stat-label">Fastest</div>
-                    <div class="stat-value" id="fastest">-</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">💾</div>
-                <div class="stat-content">
-                    <div class="stat-label">Most Efficient</div>
-                    <div class="stat-value" id="efficient">-</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔬</div>
-                <div class="stat-content">
-                    <div class="stat-label">Languages Tested</div>
-                    <div class="stat-value" id="total">-</div>
-                </div>
-            </div>
-        </section>
 
         <!-- Pace Visualization -->
         <section class="velocity">
             <div class="velocity-header">
                 <div>
                     <h2 class="section-title">🏎️ Pace Visualizer</h2>
-                    <p class="velocity-subtitle">Watch each language sprint around the track—speed reflects runtime, glow shows CPU load, and orb size mirrors memory footprint.</p>
+                    <p class="velocity-subtitle">Watch each language sprint down the lane—distance reflects runtime, glow shows CPU load, and runner size mirrors memory footprint.</p>
                 </div>
                 <div class="velocity-controls">
                     <button class="pill-button" id="loop-toggle">Pause Loop</button>
@@ -64,26 +44,24 @@
             <div class="velocity-legend" id="velocityLegend"></div>
             <div class="velocity-feedback">
                 <div class="velocity-feedback-header">
-                    <h3>Relative Pace</h3>
-                    <p>Bars show speed vs the fastest lap; text calls out the slowdown.</p>
+                    <h3>🏁 Performance Leaderboard</h3>
+                    <p>Quick view of speed vs fastest. See full table below for more metrics.</p>
                 </div>
                 <div class="pace-grid" id="paceFeedback"></div>
             </div>
         </section>
 
-        <!-- Performance Chart -->
+        <!-- Comparison Charts -->
         <section class="chart-section">
-            <h2 class="section-title">⏱️ Execution Time Comparison</h2>
-            <div class="chart-container">
-                <canvas id="timeChart"></canvas>
+            <div class="chart-header">
+                <h2 class="section-title">📊 Compare Metrics</h2>
+                <div class="chart-tabs">
+                    <button class="chart-tab active" data-chart="time">Execution Time</button>
+                    <button class="chart-tab" data-chart="memory">Memory Usage</button>
+                </div>
             </div>
-        </section>
-
-        <!-- Memory Chart -->
-        <section class="chart-section">
-            <h2 class="section-title">💾 Memory Usage Comparison</h2>
             <div class="chart-container">
-                <canvas id="memoryChart"></canvas>
+                <canvas id="compareChart"></canvas>
             </div>
         </section>
 
@@ -107,12 +85,6 @@
             </div>
         </section>
 
-        <!-- Detailed Results -->
-        <section class="details">
-            <h2 class="section-title">📊 Detailed Results</h2>
-            <div class="cards-grid" id="details-grid">
-            </div>
-        </section>
 
         <!-- Footer -->
         <footer class="footer">
@@ -125,25 +97,25 @@
         // Embedded benchmark data to avoid CORS issues with file:// protocol
         window.BENCHMARK_DATA = {
   "metadata": {
-    "timestamp": "2025-10-24T22:47:17Z",
+    "timestamp": "2025-10-24T23:20:28Z",
     "log_size": "medium",
     "iterations": 5
   },
   "languages": {
     "python": {
       "times": [
-        0.27,
-        0.22,
         0.23,
-        0.25,
+        0.26,
+        0.23,
+        0.28,
         0.24
       ],
       "memory": [
-        43.09,
-        41.42,
-        40.57,
-        44.81,
-        40.6
+        39.39,
+        41.71,
+        40.43,
+        41.32,
+        41.42
       ],
       "cpu": [
         200.0,
@@ -153,25 +125,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.242,
-        "memory_avg": 42.1,
+        "time_avg": 0.248,
+        "memory_avg": 40.85,
         "cpu_avg": 200.0
       }
     },
     "nodejs": {
       "times": [
-        0.13,
-        0.13,
-        0.11,
-        0.14,
-        0.12
+        0.06,
+        0.05,
+        0.05,
+        0.05,
+        0.06
       ],
       "memory": [
-        213.15,
-        186.98,
-        200.4,
-        208.21,
-        210.59
+        65.93,
+        65.39,
+        65.71,
+        64.56,
+        67.43
       ],
       "cpu": [
         200.0,
@@ -181,25 +153,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.126,
-        "memory_avg": 203.87,
+        "time_avg": 0.054,
+        "memory_avg": 65.8,
         "cpu_avg": 200.0
       }
     },
     "c": {
       "times": [
-        0.03,
-        0.04,
+        0.05,
         0.03,
         0.02,
-        0.02
+        0.03,
+        0.03
       ],
       "memory": [
+        8.43,
         8.34,
-        8.4,
-        8.37,
-        8.37,
-        8.34
+        8.34,
+        8.39,
+        8.45
       ],
       "cpu": [
         200.0,
@@ -209,8 +181,8 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.028,
-        "memory_avg": 8.36,
+        "time_avg": 0.032,
+        "memory_avg": 8.39,
         "cpu_avg": 200.0
       }
     },
@@ -218,16 +190,16 @@
       "times": [
         0.04,
         0.04,
+        0.04,
         0.05,
-        0.05,
-        0.04
+        0.03
       ],
       "memory": [
-        12.96,
-        12.95,
-        13.09,
-        13.03,
-        12.92
+        13.07,
+        12.98,
+        13.0,
+        13.06,
+        13.1
       ],
       "cpu": [
         200.0,
@@ -237,25 +209,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.044,
-        "memory_avg": 12.99,
+        "time_avg": 0.04,
+        "memory_avg": 13.04,
         "cpu_avg": 200.0
       }
     },
     "rust": {
       "times": [
+        0.03,
         0.02,
-        0.02,
-        0.02,
+        0.03,
         0.03,
         0.02
       ],
       "memory": [
-        10.67,
-        10.59,
-        10.64,
         10.57,
-        10.65
+        10.57,
+        10.65,
+        10.59,
+        10.57
       ],
       "cpu": [
         200.0,
@@ -265,8 +237,8 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.022,
-        "memory_avg": 10.62,
+        "time_avg": 0.026,
+        "memory_avg": 10.59,
         "cpu_avg": 200.0
       }
     },
@@ -276,14 +248,14 @@
         0.1,
         0.1,
         0.1,
-        0.11
+        0.1
       ],
       "memory": [
-        51.32,
-        50.84,
-        52.14,
-        51.35,
-        52.28
+        52.93,
+        52.65,
+        52.62,
+        52.15,
+        52.12
       ],
       "cpu": [
         200.0,
@@ -293,25 +265,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.102,
-        "memory_avg": 51.59,
+        "time_avg": 0.1,
+        "memory_avg": 52.49,
         "cpu_avg": 200.0
       }
     },
     "kotlin": {
       "times": [
-        0.14,
-        0.16,
-        0.16,
-        0.14,
+        0.15,
+        0.15,
+        0.15,
+        0.17,
         0.14
       ],
       "memory": [
-        59.98,
-        58.81,
-        58.12,
-        59.67,
-        58.18
+        59.06,
+        56.84,
+        59.51,
+        58.92,
+        57.4
       ],
       "cpu": [
         200.0,
@@ -321,25 +293,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.148,
-        "memory_avg": 58.95,
+        "time_avg": 0.152,
+        "memory_avg": 58.35,
         "cpu_avg": 200.0
       }
     },
     "csharp": {
       "times": [
-        0.08,
         0.1,
         0.08,
-        0.08,
-        0.07
+        0.07,
+        0.07,
+        0.08
       ],
       "memory": [
-        46.46,
-        46.56,
-        46.28,
+        46.32,
+        46.75,
+        46.34,
         46.31,
-        46.54
+        46.45
       ],
       "cpu": [
         200.0,
@@ -349,25 +321,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.082,
+        "time_avg": 0.08,
         "memory_avg": 46.43,
         "cpu_avg": 200.0
       }
     },
     "julia": {
       "times": [
-        0.46,
-        0.47,
-        0.47,
-        0.46,
-        0.46
+        0.57,
+        0.54,
+        0.56,
+        0.54,
+        0.6
       ],
       "memory": [
-        268.17,
-        271.71,
-        271.28,
-        271.98,
-        271.92
+        274.76,
+        273.62,
+        273.32,
+        273.18,
+        274.25
       ],
       "cpu": [
         200.0,
@@ -377,25 +349,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.464,
-        "memory_avg": 271.01,
+        "time_avg": 0.562,
+        "memory_avg": 273.83,
         "cpu_avg": 200.0
       }
     },
     "elixir": {
       "times": [
-        0.53,
-        0.57,
-        0.5,
-        0.49,
-        0.48
+        0.43,
+        0.47,
+        0.45,
+        0.46,
+        0.5
       ],
       "memory": [
-        98.12,
-        96.29,
-        95.29,
-        93.12,
-        94.95
+        91.75,
+        94.75,
+        95.82,
+        95.1,
+        94.17
       ],
       "cpu": [
         200.0,
@@ -405,25 +377,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.514,
-        "memory_avg": 95.55,
+        "time_avg": 0.462,
+        "memory_avg": 94.32,
         "cpu_avg": 200.0
       }
     },
     "ruby": {
       "times": [
-        0.16,
-        0.16,
-        0.16,
-        0.17,
-        0.16
+        0.14,
+        0.14,
+        0.14,
+        0.15,
+        0.14
       ],
       "memory": [
-        45.07,
-        45.46,
-        45.64,
-        45.14,
-        44.78
+        41.34,
+        40.57,
+        40.56,
+        40.81,
+        40.51
       ],
       "cpu": [
         200.0,
@@ -433,25 +405,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.162,
-        "memory_avg": 45.22,
+        "time_avg": 0.142,
+        "memory_avg": 40.76,
         "cpu_avg": 200.0
       }
     },
     "nim": {
       "times": [
+        0.57,
         0.04,
-        0.03,
         0.04,
         0.04,
-        0.03
+        0.04
       ],
       "memory": [
-        34.12,
-        34.25,
-        34.25,
-        34.25,
-        34.21
+        28.17,
+        27.98,
+        27.92,
+        27.78,
+        28.09
       ],
       "cpu": [
         200.0,
@@ -461,25 +433,25 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.036,
-        "memory_avg": 34.22,
+        "time_avg": 0.146,
+        "memory_avg": 27.99,
         "cpu_avg": 200.0
       }
     },
     "php": {
       "times": [
-        0.13,
+        0.08,
+        0.08,
         0.09,
         0.09,
-        0.09,
-        0.09
+        0.08
       ],
       "memory": [
-        35.51,
-        35.65,
-        35.85,
-        35.87,
-        35.92
+        35.92,
+        36.17,
+        36.17,
+        35.78,
+        35.75
       ],
       "cpu": [
         200.0,
@@ -489,8 +461,8 @@
         200.0
       ],
       "stats": {
-        "time_avg": 0.098,
-        "memory_avg": 35.76,
+        "time_avg": 0.084,
+        "memory_avg": 35.96,
         "cpu_avg": 200.0
       }
     }

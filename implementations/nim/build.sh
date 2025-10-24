@@ -2,4 +2,5 @@
 set -e
 cd "$(dirname "$0")"
 
-nim c --threads:on -d:release solution.nim
+# Maximum performance build with danger mode
+nim c -d:danger --threads:on --opt:speed --passC:"-march=native -O3" solution.nim

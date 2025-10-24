@@ -64,56 +64,61 @@ function formatLanguageName(lang) {
 }
 
 // Update metadata section
-function updateMetadata(metadata) {
+function updateMetadata(metadata, languages = {}) {
     const metadataDiv = document.getElementById('metadata');
-    const date = new Date(metadata.timestamp);
-    metadataDiv.innerHTML = `
-        📅 ${date.toLocaleDateString()} | 
-        📊 ${metadata.log_size.charAt(0).toUpperCase() + metadata.log_size.slice(1)} dataset | 
-        🔄 ${metadata.iterations} iterations
-    `;
-}
-
-// Update summary statistics
-function updateSummary(languages) {
+    const heroSummary = document.getElementById('hero-summary');
     const entries = Object.entries(languages);
-    
-    // Find fastest by time
-    const fastest = entries.reduce((min, curr) => 
-        curr[1].stats.time_avg < min[1].stats.time_avg ? curr : min
-    );
-    
-    // Find most memory efficient
-    const efficient = entries.reduce((min, curr) => 
-        curr[1].stats.memory_avg < min[1].stats.memory_avg ? curr : min
-    );
-    
-    document.getElementById('fastest').textContent = formatLanguageName(fastest[0]);
-    document.getElementById('efficient').textContent = formatLanguageName(efficient[0]);
-    document.getElementById('total').textContent = entries.length;
+    const date = new Date(metadata.timestamp);
+    if (metadataDiv) {
+        metadataDiv.textContent = `📅 ${date.toLocaleDateString()} · ${metadata.log_size.charAt(0).toUpperCase() + metadata.log_size.slice(1)} dataset · ${metadata.iterations} iterations`;
+    }
+    if (heroSummary && entries.length) {
+        const fastest = entries.reduce((min, curr) => curr[1].stats.time_avg < min[1].stats.time_avg ? curr : min);
+        const efficient = entries.reduce((min, curr) => curr[1].stats.memory_avg < min[1].stats.memory_avg ? curr : min);
+        heroSummary.textContent = `🏆 ${formatLanguageName(fastest[0])} fastest · 💾 ${formatLanguageName(efficient[0])} lowest memory · 🔬 ${entries.length} languages`;
+    }
 }
 
 // Create time comparison chart
-function createTimeChart(languages) {
-    const ctx = document.getElementById('timeChart').getContext('2d');
-    
-    const sortedLangs = Object.entries(languages).sort((a, b) => 
-        a[1].stats.time_avg - b[1].stats.time_avg
+let compareChart;
+
+function getChartConfig(mode, languages) {
+    const entries = Object.entries(languages);
+    const sortedLangs = entries.sort((a, b) => 
+        mode === 'time'
+            ? a[1].stats.time_avg - b[1].stats.time_avg
+            : a[1].stats.memory_avg - b[1].stats.memory_avg
     );
-    
     const labels = sortedLangs.map(([name]) => formatLanguageName(name));
-    const data = sortedLangs.map(([_, lang]) => lang.stats.time_avg);
+    const data = sortedLangs.map(([_, lang]) => mode === 'time' ? lang.stats.time_avg : lang.stats.memory_avg);
     const colors = sortedLangs.map(([name]) => LANGUAGE_COLORS[name] || '#666');
+    const label = mode === 'time' ? 'Average Execution Time (seconds)' : 'Average Memory Usage (MB)';
+    const tooltip = mode === 'time'
+        ? (value) => `${value.toFixed(3)}s`
+        : (value) => `${value.toFixed(2)} MB`;
+    const tick = mode === 'time'
+        ? (value) => value.toFixed(2) + 's'
+        : (value) => value.toFixed(0) + ' MB';
+    return { labels, data, colors, label, tooltip, tick };
+}
+
+function initComparisonChart(languages) {
+    const canvas = document.getElementById('compareChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let currentMode = 'time';
+    const chartTabs = document.querySelectorAll('.chart-tab');
+    const baseConfig = getChartConfig(currentMode, languages);
     
-    new Chart(ctx, {
+    compareChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: baseConfig.labels,
             datasets: [{
-                label: 'Average Execution Time (seconds)',
-                data: data,
-                backgroundColor: colors,
-                borderColor: colors.map(c => c + 'dd'),
+                label: baseConfig.label,
+                data: baseConfig.data,
+                backgroundColor: baseConfig.colors,
+                borderColor: baseConfig.colors.map(c => c + 'dd'),
                 borderWidth: 2,
                 borderRadius: 8
             }]
@@ -131,7 +136,7 @@ function createTimeChart(languages) {
                     titleFont: { size: 14 },
                     bodyFont: { size: 13 },
                     callbacks: {
-                        label: (context) => `${context.parsed.y.toFixed(3)}s`
+                        label: (context) => baseConfig.tooltip(context.parsed.y)
                     }
                 }
             },
@@ -143,7 +148,7 @@ function createTimeChart(languages) {
                     },
                     ticks: {
                         color: '#9aa0a6',
-                        callback: (value) => value.toFixed(2) + 's'
+                        callback: (value) => baseConfig.tick(value)
                     }
                 },
                 x: {
@@ -157,85 +162,42 @@ function createTimeChart(languages) {
             }
         }
     });
-}
-
-// Create memory comparison chart
-function createMemoryChart(languages) {
-    const ctx = document.getElementById('memoryChart').getContext('2d');
     
-    const sortedLangs = Object.entries(languages).sort((a, b) => 
-        a[1].stats.memory_avg - b[1].stats.memory_avg
-    );
+    const updateChart = (mode) => {
+        if (mode === currentMode || !compareChart) return;
+        currentMode = mode;
+        const config = getChartConfig(mode, languages);
+        const dataset = compareChart.data.datasets[0];
+        compareChart.data.labels = config.labels;
+        dataset.label = config.label;
+        dataset.data = config.data;
+        dataset.backgroundColor = config.colors;
+        dataset.borderColor = config.colors.map(c => c + 'dd');
+        compareChart.options.scales.y.ticks.callback = (value) => config.tick(value);
+        compareChart.options.plugins.tooltip.callbacks.label = (context) => config.tooltip(context.parsed.y);
+        compareChart.update();
+    };
     
-    const labels = sortedLangs.map(([name]) => formatLanguageName(name));
-    const data = sortedLangs.map(([_, lang]) => lang.stats.memory_avg);
-    const colors = sortedLangs.map(([name]) => LANGUAGE_COLORS[name] || '#666');
-    
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Average Memory Usage (MB)',
-                data: data,
-                backgroundColor: colors,
-                borderColor: colors.map(c => c + 'dd'),
-                borderWidth: 2,
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
-                    titleFont: { size: 14 },
-                    bodyFont: { size: 13 },
-                    callbacks: {
-                        label: (context) => `${context.parsed.y.toFixed(2)} MB`
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                        color: '#9aa0a6',
-                        callback: (value) => value.toFixed(0) + ' MB'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: '#9aa0a6'
-                    }
-                }
-            }
-        }
+    chartTabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.chart === currentMode);
+        tab.addEventListener('click', () => {
+            chartTabs.forEach(btn => btn.classList.toggle('active', btn === tab));
+            updateChart(tab.dataset.chart);
+        });
     });
 }
 
 // Create kinetic pace visualization
-function createVelocityLoop(languages) {
+function createSprintTrack(languages) {
     const canvas = document.getElementById('velocityCanvas');
     const legend = document.getElementById('velocityLegend');
     const toggleBtn = document.getElementById('loop-toggle');
     const speedSlider = document.getElementById('loop-speed');
     const speedLabel = document.getElementById('loop-speed-label');
     const paceContainer = document.getElementById('paceFeedback');
-    
+
     if (!canvas || !legend) return;
-    
+
     const entries = Object.entries(languages);
     if (!entries.length) return;
     
@@ -250,7 +212,11 @@ function createVelocityLoop(languages) {
     const memoryRange = maxMemory - minMemory || 1;
     const cpuRange = maxCpu - minCpu || 1;
     
-    const baseAngularSpeed = 2.4; // radians per second for the fastest implementation
+    let laneSpacing = 58;
+    const lanePadding = 70;
+    const minTrackHeight = 360;
+    
+    const baseLapRate = 0.35; // lap fraction per second for fastest implementation
     
     const runners = entries.map(([name, lang], index) => {
         const memoryNorm = (lang.stats.memory_avg - minMemory) / memoryRange;
@@ -262,12 +228,16 @@ function createVelocityLoop(languages) {
             time: lang.stats.time_avg,
             memory: lang.stats.memory_avg,
             cpu: lang.stats.cpu_avg,
-            speed: baseAngularSpeed * (fastest / lang.stats.time_avg),
-            size: 8 + memoryNorm * 16,
-            trail: 0.4 + cpuNorm * 1.4,
-            angle: (index / entries.length) * Math.PI * 2
+            lapRate: baseLapRate * (fastest / lang.stats.time_avg),
+            size: 12 + memoryNorm * 18,
+            trail: 0.2 + cpuNorm * 0.8,
+            progress: (index / entries.length) % 1
         };
     });
+
+    const trackHeight = Math.max(minTrackHeight, lanePadding * 2 + laneSpacing * Math.max(0, runners.length - 1));
+    canvas.style.height = `${trackHeight}px`;
+    canvas.parentElement.style.height = `${trackHeight}px`;
     
     legend.innerHTML = '';
     if (paceContainer) paceContainer.innerHTML = '';
@@ -304,6 +274,7 @@ function createVelocityLoop(languages) {
             `;
             paceContainer.appendChild(row);
         }
+        
     });
     
     const ctx = canvas.getContext('2d');
@@ -325,6 +296,7 @@ function createVelocityLoop(languages) {
     let running = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let speedMultiplier = 1;
     let lastTime = performance.now();
+    const finishCounts = Object.fromEntries(runners.map(r => [r.name, 0]));
     
     if (toggleBtn) {
         toggleBtn.textContent = running ? 'Pause Loop' : 'Play Loop';
@@ -351,54 +323,110 @@ function createVelocityLoop(languages) {
         lastTime = now;
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const radius = Math.max(120, Math.min(width, height) / 2 - 50);
+        const startX = 110;
+        const endX = width - 80;
+        const trackLength = Math.max(80, endX - startX);
+        const orderedRunners = [...runners].sort((a, b) => finishCounts[b.name] - finishCounts[a.name] || a.time - b.time);
+        const laneMap = new Map();
+        orderedRunners.forEach((runner, idx) => laneMap.set(runner.name, idx));
+        const laneOffset = (height - laneSpacing * (orderedRunners.length - 1)) / 2;
         
         ctx.clearRect(0, 0, width, height);
         
-        // Draw track
+        // Draw lanes
         ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 10]);
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        orderedRunners.forEach((runner, laneIndex) => {
+            const laneY = laneOffset + laneIndex * laneSpacing;
+            ctx.beginPath();
+            ctx.moveTo(startX - 40, laneY);
+            ctx.lineTo(endX + 40, laneY);
+            ctx.stroke();
+        });
         ctx.restore();
         
-        runners.forEach(runner => {
+        // Lane labels
+        ctx.save();
+        ctx.font = '600 14px "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textBaseline = 'middle';
+        orderedRunners.forEach((runner, laneIndex) => {
+            const laneY = laneOffset + laneIndex * laneSpacing;
+            const labelX = Math.max(16, startX - 110);
+            ctx.fillStyle = hexToRgba('#0a0e27', 0.65);
+            const finishText = finishCounts[runner.name] > 0 ? ` · ${finishCounts[runner.name]}` : '';
+            const text = runner.label + finishText;
+            const textWidth = ctx.measureText(text).width;
+            const paddingX = 14;
+            const paddingY = 10;
+            const pillWidth = textWidth + paddingX * 2;
+            const pillHeight = paddingY;
+            const pillY = laneY - pillHeight / 2;
+            const pillX = labelX - paddingX;
+            ctx.beginPath();
+            ctx.roundRect(pillX - 4, pillY - 2, pillWidth + 8, pillHeight + 4, 999);
+            ctx.fill();
+            ctx.fillStyle = runner.color;
+            ctx.fillText(text, labelX, laneY);
+        });
+        ctx.restore();
+        
+        // Draw start/finish columns
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(startX - 6, 30, 4, height - 60);
+        ctx.fillRect(endX + 2, 30, 4, height - 60);
+        
+        orderedRunners.forEach(runner => {
             if (running) {
-                runner.angle += delta * runner.speed * speedMultiplier;
-                runner.angle %= Math.PI * 2;
+                const prevProgress = runner.progress;
+                runner.progress += delta * runner.lapRate * speedMultiplier;
+                if (runner.progress >= 1) {
+                    runner.progress -= 1;
+                    finishCounts[runner.name] += 1;
+                }
             }
             
-            const x = centerX + Math.cos(runner.angle) * radius;
-            const y = centerY + Math.sin(runner.angle) * radius;
+            const laneIndex = laneMap.get(runner.name) ?? 0;
+            const laneY = laneOffset + laneIndex * laneSpacing;
+            const x = startX + runner.progress * trackLength;
+            const capsuleWidth = Math.max(36, runner.size * 1.8);
+            const capsuleHeight = runner.size;
             
             // Trail represents CPU usage
-            ctx.beginPath();
-            ctx.strokeStyle = hexToRgba(runner.color, 0.6);
-            ctx.lineWidth = Math.max(2, runner.size * 0.4);
-            ctx.arc(centerX, centerY, radius, runner.angle - runner.trail, runner.angle);
-            ctx.stroke();
-            
-            // Runner
             ctx.save();
-            ctx.shadowColor = hexToRgba(runner.color, 0.9);
-            ctx.shadowBlur = 15 + runner.trail * 10;
-            ctx.fillStyle = runner.color;
+            ctx.strokeStyle = hexToRgba(runner.color, 0.45);
+            ctx.lineWidth = Math.max(2, capsuleHeight * 0.45);
             ctx.beginPath();
-            ctx.arc(x, y, runner.size, 0, Math.PI * 2);
+            ctx.moveTo(startX, laneY);
+            ctx.lineTo(x, laneY);
+            ctx.stroke();
+            ctx.restore();
+            
+            // Runner capsule
+            ctx.save();
+            ctx.shadowColor = hexToRgba(runner.color, 0.85);
+            ctx.shadowBlur = 12 + runner.trail * 18;
+            ctx.fillStyle = runner.color;
+            const halfWidth = capsuleWidth / 2;
+            const halfHeight = capsuleHeight / 2;
+            ctx.beginPath();
+            ctx.moveTo(x - halfWidth + halfHeight, laneY - halfHeight);
+            ctx.lineTo(x + halfWidth - halfHeight, laneY - halfHeight);
+            ctx.arc(x + halfWidth - halfHeight, laneY, halfHeight, -Math.PI / 2, Math.PI / 2);
+            ctx.lineTo(x - halfWidth + halfHeight, laneY + halfHeight);
+            ctx.arc(x - halfWidth + halfHeight, laneY, halfHeight, Math.PI / 2, -Math.PI / 2);
+            ctx.closePath();
             ctx.fill();
             ctx.restore();
             
             ctx.strokeStyle = 'rgba(255,255,255,0.35)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.arc(x, y, runner.size, 0, Math.PI * 2);
+            ctx.moveTo(x - halfWidth + halfHeight, laneY - halfHeight);
+            ctx.lineTo(x + halfWidth - halfHeight, laneY - halfHeight);
+            ctx.arc(x + halfWidth - halfHeight, laneY, halfHeight, -Math.PI / 2, Math.PI / 2);
+            ctx.lineTo(x - halfWidth + halfHeight, laneY + halfHeight);
+            ctx.arc(x - halfWidth + halfHeight, laneY, halfHeight, Math.PI / 2, -Math.PI / 2);
             ctx.stroke();
         });
         
@@ -442,77 +470,6 @@ function createLeaderboard(languages) {
 }
 
 // Create detailed cards
-function createDetailCards(languages) {
-    const grid = document.getElementById('details-grid');
-    
-    const sortedLangs = Object.entries(languages).sort((a, b) => 
-        a[1].stats.time_avg - b[1].stats.time_avg
-    );
-    
-    const maxTime = Math.max(...sortedLangs.map(([_, lang]) => lang.stats.time_avg));
-    const maxMemory = Math.max(...sortedLangs.map(([_, lang]) => lang.stats.memory_avg));
-    
-    sortedLangs.forEach(([name, lang], index) => {
-        let badge = '';
-        let badgeClass = '';
-        
-        if (index === 0) {
-            badge = 'Fastest';
-            badgeClass = 'badge-fastest';
-        } else if (lang.stats.memory_avg === Math.min(...sortedLangs.map(([_, l]) => l.stats.memory_avg))) {
-            badge = 'Most Efficient';
-            badgeClass = 'badge-efficient';
-        } else if (index < 3) {
-            badge = 'Top 3';
-            badgeClass = 'badge-good';
-        }
-        
-        const timePercent = (lang.stats.time_avg / maxTime) * 100;
-        const memoryPercent = (lang.stats.memory_avg / maxMemory) * 100;
-        
-        const card = document.createElement('div');
-        card.className = 'detail-card';
-        card.innerHTML = `
-            <div class="detail-header">
-                <div class="detail-lang">${formatLanguageName(name)}</div>
-                ${badge ? `<div class="detail-badge ${badgeClass}">${badge}</div>` : ''}
-            </div>
-            <div class="detail-metrics">
-                <div>
-                    <div class="metric-row">
-                        <span class="metric-label">Avg Execution Time</span>
-                        <span class="metric-value">${lang.stats.time_avg.toFixed(3)}s</span>
-                    </div>
-                    <div class="metric-bar">
-                        <div class="metric-fill" style="width: ${timePercent}%"></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="metric-row">
-                        <span class="metric-label">Avg Memory Usage</span>
-                        <span class="metric-value">${lang.stats.memory_avg.toFixed(2)} MB</span>
-                    </div>
-                    <div class="metric-bar">
-                        <div class="metric-fill" style="width: ${memoryPercent}%"></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="metric-row">
-                        <span class="metric-label">Time Range</span>
-                        <span class="metric-value">${Math.min(...lang.times).toFixed(3)} - ${Math.max(...lang.times).toFixed(3)}s</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="metric-row">
-                        <span class="metric-label">Memory Range</span>
-                        <span class="metric-value">${Math.min(...lang.memory).toFixed(2)} - ${Math.max(...lang.memory).toFixed(2)} MB</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
-}
 
 // Initialize the app
 async function init() {
@@ -523,13 +480,10 @@ async function init() {
         return;
     }
     
-    updateMetadata(data.metadata);
-    updateSummary(data.languages);
-    createVelocityLoop(data.languages);
-    createTimeChart(data.languages);
-    createMemoryChart(data.languages);
+    updateMetadata(data.metadata, data.languages);
+    createSprintTrack(data.languages);
+    initComparisonChart(data.languages);
     createLeaderboard(data.languages);
-    createDetailCards(data.languages);
 }
 
 // Start when DOM is ready

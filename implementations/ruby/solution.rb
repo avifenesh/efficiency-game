@@ -13,22 +13,9 @@ unless File.exist?(logfile)
   exit 1
 end
 
-def ascii_alnum?(ch)
-  ch >= '0' && ch <= '9' || ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z'
-end
-
-def contains_word(line, word)
-  idx = -1
-  n = word.length
-  while (idx = line.index(word, idx + 1))
-    before = idx - 1
-    after = idx + n
-    start_ok = before < 0 || !ascii_alnum?(line[before])
-    end_ok = after >= line.length || !ascii_alnum?(line[after])
-    return true if start_ok && end_ok
-  end
-  false
-end
+# Pre-compiled frozen regex patterns for optimal performance
+ERROR_REGEX = /\bERROR\b/.freeze
+WARN_REGEX = /\bWARN\b/.freeze
 
 lines = File.foreach(logfile, chomp: true).to_a
 if lines.empty?
@@ -48,9 +35,9 @@ lines.each_slice(chunk_size).with_index do |chunk, i|
     local_errors = 0
     local_warnings = 0
     chunk.each do |line|
-      if contains_word(line, "ERROR")
+      if ERROR_REGEX.match?(line)
         local_errors += 1
-      elsif contains_word(line, "WARN")
+      elsif WARN_REGEX.match?(line)
         local_warnings += 1
       end
     end
@@ -62,8 +49,13 @@ end
 
 threads.each(&:join)
 
-errors = results.sum { |r| r[0] }
-warnings = results.sum { |r| r[1] }
+# Direct iteration is faster than sum with block for small result sets
+errors = 0
+warnings = 0
+results.each do |r|
+  errors += r[0]
+  warnings += r[1]
+end
 total = errors + warnings
 
 puts JSON.generate({ errors: errors, warnings: warnings, total: total })
