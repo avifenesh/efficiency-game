@@ -187,14 +187,13 @@ function initComparisonChart(languages) {
     });
 }
 
-// Create kinetic pace visualization
+// Create sprint track visualization
 function createSprintTrack(languages) {
     const canvas = document.getElementById('velocityCanvas');
     const legend = document.getElementById('velocityLegend');
     const toggleBtn = document.getElementById('loop-toggle');
     const speedSlider = document.getElementById('loop-speed');
     const speedLabel = document.getElementById('loop-speed-label');
-    const paceContainer = document.getElementById('paceFeedback');
 
     if (!canvas || !legend) return;
 
@@ -240,9 +239,8 @@ function createSprintTrack(languages) {
     canvas.parentElement.style.height = `${trackHeight}px`;
     
     legend.innerHTML = '';
-    if (paceContainer) paceContainer.innerHTML = '';
     const legendData = [...runners].sort((a, b) => a.time - b.time);
-    legendData.forEach((runner, index) => {
+    legendData.forEach((runner) => {
         const item = document.createElement('div');
         item.className = 'legend-item';
         item.innerHTML = `
@@ -255,25 +253,6 @@ function createSprintTrack(languages) {
                 </div>
         `;
         legend.appendChild(item);
-        
-        if (paceContainer) {
-            const relativeSpeed = fastest / runner.time;
-            const widthPercent = Math.max(8, Math.min(100, relativeSpeed * 100));
-            const slowerPct = index === 0 ? 0 : ((runner.time - fastest) / fastest) * 100;
-            const row = document.createElement('div');
-            row.className = 'pace-row';
-            row.innerHTML = `
-                <div class="pace-label">
-                    <span class="pace-rank">#${index + 1}</span>
-                    <span>${runner.label}</span>
-                </div>
-                <div class="pace-track">
-                    <div class="pace-fill" style="width:${widthPercent.toFixed(1)}%; background:${runner.color};"></div>
-                </div>
-                <div class="pace-meta">${index === 0 ? 'Fastest' : '+' + slowerPct.toFixed(0) + '% slower'}</div>
-            `;
-            paceContainer.appendChild(row);
-        }
         
     });
     
