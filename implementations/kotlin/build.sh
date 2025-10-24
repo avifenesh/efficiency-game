@@ -2,4 +2,5 @@
 set -e
 cd "$(dirname "$0")"
 
-kotlinc Solution.kt -include-runtime -d solution.jar
+# Compile in optimized mode without debug info
+kotlinc -include-runtime -Xno-call-assertions -Xno-param-assertions -d solution.jar Solution.kt

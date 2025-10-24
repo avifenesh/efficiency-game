@@ -2,4 +2,5 @@
 set -e
 cd "$(dirname "$0")"
 
-javac Solution.java
+# Compile without debug info for production
+javac -g:none Solution.java
