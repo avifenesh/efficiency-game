@@ -4,4 +4,8 @@ cd "$(dirname "$0")"
 
 LOG_FILE=${1:-"../../data/synthetic/medium.log"}
 
-mojo solution.mojo $LOG_FILE
+if [ ! -f "solution" ]; then
+    ./build.sh > /dev/null
+fi
+
+./solution "$LOG_FILE"

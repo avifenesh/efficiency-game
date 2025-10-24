@@ -224,6 +224,7 @@ Build.bat
 nimcache/
 nimblecache/
 htmldocs/
+implementations/nim/solution
 
 # Haskell (if added later)
 # ------------------------

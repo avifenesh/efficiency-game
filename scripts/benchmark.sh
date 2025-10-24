@@ -45,17 +45,15 @@ declare -a LANGUAGES=(
     "nodejs:no:yes:node"
     "c:yes:no:./solution"
     "cpp:yes:no:./solution"
-
     "rust:yes:no:./solution"
-    "zig:yes:no:./solution"
     "java:yes:yes:java"
-    "scala:yes:yes:scala"
     "kotlin:yes:yes:java"
-    "csharp:yes:no:./bin/Release/net6.0/csharp"
-    "mojo:no:no:mojo"
+    "csharp:yes:no:dotnet"
     "julia:no:yes:julia"
     "elixir:no:yes:elixir"
     "ruby:no:no:ruby"
+    "nim:yes:no:./solution"
+    "php:no:no:php"
 )
 
 # Initialize results
