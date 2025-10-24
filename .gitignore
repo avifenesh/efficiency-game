@@ -1,0 +1,254 @@
+# ===================================================================
+# Language Efficiency Race - Comprehensive .gitignore
+# ===================================================================
+
+# Operating System Files
+# -----------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+*.swp
+*.swo
+.AppleDouble
+.LSOverride
+
+# IDE and Editor Files
+# --------------------
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.code-workspace
+
+# Benchmark Results and Data
+# ---------------------------
+/data/results.json
+/data/synthetic/*.log
+# Keep the directory structure but ignore large log files
+
+# Python
+# ------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+.tox/
+venv/
+env/
+ENV/
+
+# Node.js
+# -------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.npm
+.eslintcache
+
+# C / C++
+# -------
+*.o
+*.obj
+*.out
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+implementations/c/solution
+implementations/cpp/solution
+*.dSYM/
+
+# Rust
+# ----
+**/target/
+Cargo.lock
+**/*.rs.bk
+
+# Java
+# ----
+*.class
+*.jar
+!gradle-wrapper.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# Scala
+# -----
+*.class
+.scala_dependencies
+.worksheet
+project/target/
+project/project/
+
+# Kotlin
+# ------
+*.class
+*.jar
+*.kotlin_module
+.kotlin/
+
+# C# / .NET
+# ---------
+**/bin/
+**/obj/
+*.dll
+*.exe
+*.pdb
+*.user
+*.suo
+*.cache
+*.log
+.vs/
+*.nupkg
+*.snupkg
+
+# Zig
+# ---
+zig-cache/
+zig-out/
+implementations/zig/solution
+*.o
+
+# Go
+# --
+*.exe
+*.exe~
+*.test
+*.out
+/vendor/
+
+# Ruby
+# ----
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/test/tmp/
+/test/version_tmp/
+/tmp/
+.bundle/
+vendor/bundle/
+.rvmrc
+
+# Elixir
+# ------
+/_build/
+/deps/
+/*.ez
+erl_crash.dump
+*.beam
+/config/*.secret.exs
+.elixir_ls/
+
+# Julia
+# -----
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+/Manifest.toml
+
+# Mojo
+# ----
+__pycache__/
+*.mojopkg
+.mojo_cache/
+
+# PHP
+# ---
+/vendor/
+composer.lock
+.phpunit.result.cache
+
+# Perl
+# ----
+blib/
+.build/
+_build/
+cover_db/
+inc/
+Build
+!Build/
+Build.bat
+.last_cover_stats
+/Makefile
+/Makefile.old
+/MANIFEST.bak
+/pm_to_blib
+*.o
+*.bs
+
+# Nim
+# ---
+nimcache/
+nimblecache/
+htmldocs/
+
+# Haskell (if added later)
+# ------------------------
+.stack-work/
+*.hi
+*.chi
+*.chs.h
+.cabal-sandbox/
+cabal.sandbox.config
+dist-newstyle/
+
+# Swift (if added later)
+# ----------------------
+.build/
+*.xcodeproj
+*.xcworkspace
+*.playground
+
+# Temporary & Benchmark Files
+# ----------------------------
+*.tmp
+*.temp
+*.log
+metrics_*.txt
+build_errors.log
+
+# Keep important files
+# --------------------
+!.gitkeep
+!/data/.gitkeep
+!/data/synthetic/.gitkeep
