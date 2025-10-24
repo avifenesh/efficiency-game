@@ -6,13 +6,20 @@ A comprehensive benchmark comparing the execution efficiency of multiple program
 
 This project measures and compares the performance (execution time, memory usage, CPU utilization) of different programming languages when processing log files to detect and count anomalies (ERROR and WARN patterns). For collaboration roles and handoff expectations, see `AGENTS.md`.
 
-### Current Languages Tested
-- ✅ **C** - 0.026s (Fastest!)
-- ✅ **Node.js** - 0.086s
-- ✅ **Python** - 0.270s
-
-### Languages Ready to Implement
-- C++, C#, Rust, Go, Zig, Nim, Java, Kotlin, Ruby, PHP, Scala, Elixir, Perl, Mojo
+### Current Languages Tested (13)
+- ✅ **C** - 0.034s (Fastest!)
+- ✅ **Rust** - 0.034s (Tied!)
+- ✅ **Nim** - 0.040s
+- ✅ **C#** - 0.078s
+- ✅ **Java** - 0.102s
+- ✅ **PHP** - 0.106s
+- ✅ **C++** - 0.142s
+- ✅ **Node.js** - 0.146s
+- ✅ **Kotlin** - 0.172s
+- ✅ **Ruby** - 0.176s
+- ✅ **Python** - 0.304s
+- ✅ **Julia** - 0.500s
+- ✅ **Elixir** - 0.520s
 
 ## 📊 Results
 
@@ -24,9 +31,19 @@ open web/index.html
 ### Current Benchmark Results (Medium Dataset - 100K lines)
 | Rank | Language | Avg Time | Avg Memory | Speed Multiplier |
 |------|----------|----------|------------|------------------|
-| 🥇 | C | 0.026s | 8.37 MB | 1.0x |
-| 🥈 | Node.js | 0.086s | 158.19 MB | 3.3x |
-| 🥉 | Python | 0.270s | 41.88 MB | 10.4x |
+| 🥇 | C | 0.034s | 8.45 MB | 1.0x |
+| 🥇 | Rust | 0.034s | 10.58 MB | 1.0x |
+| 🥈 | Nim | 0.040s | 34.22 MB | 1.2x |
+| 🥉 | C# | 0.078s | 46.66 MB | 2.3x |
+| 4 | Java | 0.102s | 52.98 MB | 3.0x |
+| 5 | PHP | 0.106s | 35.82 MB | 3.1x |
+| 6 | C++ | 0.142s | 13.13 MB | 4.2x |
+| 7 | Node.js | 0.146s | 201.27 MB | 4.3x |
+| 8 | Kotlin | 0.172s | 60.26 MB | 5.1x |
+| 9 | Ruby | 0.176s | 45.58 MB | 5.2x |
+| 10 | Python | 0.304s | 41.31 MB | 8.9x |
+| 11 | Julia | 0.500s | 270.36 MB | 14.7x |
+| 12 | Elixir | 0.520s | 92.55 MB | 15.3x |
 
 ## 🚀 Quick Start
 
