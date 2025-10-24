@@ -2,4 +2,6 @@
 set -e
 cd "$(dirname "$0")"
 
-zig build-exe solution.zig -O ReleaseSafe
+# Note: Optimization flags cause compiler crash on some Zig versions
+# Building without optimization for compatibility
+zig build-exe solution.zig

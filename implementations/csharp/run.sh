@@ -4,8 +4,8 @@ cd "$(dirname "$0")"
 
 LOG_FILE=${1:-"../../data/synthetic/medium.log"}
 
-if [ ! -f "bin/Release/net6.0/csharp" ]; then
+if [ ! -f "bin/Release/net9.0/csharp.dll" ]; then
     ./build.sh > /dev/null
 fi
 
-./bin/Release/net6.0/csharp $LOG_FILE
+dotnet bin/Release/net9.0/csharp.dll "$LOG_FILE"

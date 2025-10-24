@@ -1,43 +1,90 @@
 const std = @import("std");
 
+const WorkerResult = struct {
+    errors: usize,
+    warnings: usize,
+};
+
 pub fn main() !void {
-    const allocator = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
     var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
 
     _ = args.next(); // skip exe name
     const logfile = args.next() orelse {
         try std.io.getStdErr().writer().print("Usage: solution <logfile>\n", .{});
-        return;
+        return error.MissingArgument;
     };
 
     const file = try std.fs.cwd().openFile(logfile, .{});
     defer file.close();
 
-    var errors: usize = 0;
-    var warnings: usize = 0;
+    const stat = try file.stat();
+    const file_size = @intCast(usize, stat.size);
+    const data = try file.readToEndAlloc(allocator, file_size);
+    defer allocator.free(data);
 
-    var buf_reader = std.io.bufferedReader(file.reader());
-    var in_stream = buf_reader.reader();
-    var buffer: [1024]u8 = undefined;
+    var lines = std.ArrayList([]const u8).init(allocator);
+    defer lines.deinit();
 
-    while (try in_stream.readUntilDelimiterOrEof(&buffer, '\n')) |line| {
-        if (containsWord(line, "ERROR")) {
-            errors += 1;
-        } else if (containsWord(line, "WARN")) {
-            warnings += 1;
-        }
+    var splitter = std.mem.splitScalar(u8, data, '\n');
+    while (splitter.next()) |raw| {
+        const line = std.mem.trimRight(u8, raw, "\r");
+        try lines.append(line);
     }
 
-    const total = errors + warnings;
-    const json_out = try std.json.stringify(
-        .{ .errors = errors, .warnings = warnings, .total = total },
-        .{ .allocator = allocator },
-    );
-    defer allocator.free(json_out);
+    if (lines.items.len == 0) {
+        try outputResult(0, 0);
+        return;
+    }
 
+    const cpu_count = std.Thread.getCpuCount() catch 1;
+    const desired_threads = @intCast(usize, cpu_count);
+    const worker_count = if (desired_threads == 0) 1 else @min(desired_threads, lines.items.len);
+    const chunk_size = std.math.divCeil(usize, lines.items.len, worker_count) catch unreachable;
+
+    var thread_handles = std.ArrayList(std.Thread).init(allocator);
+    defer thread_handles.deinit();
+
+    var start: usize = 0;
+    while (start < lines.items.len) {
+        const end = @min(lines.items.len, start + chunk_size);
+        const chunk = lines.items[start..end];
+        const handle = try std.Thread.spawn(.{}, worker, .{chunk});
+        try thread_handles.append(handle);
+        start = end;
+    }
+
+    var total_errors: usize = 0;
+    var total_warnings: usize = 0;
+    for (thread_handles.items) |handle| {
+        const result = handle.join();
+        total_errors += result.errors;
+        total_warnings += result.warnings;
+    }
+
+    try outputResult(total_errors, total_warnings);
+}
+
+fn worker(chunk: []const []const u8) WorkerResult {
+    var result = WorkerResult{ .errors = 0, .warnings = 0 };
+    for (chunk) |line| {
+        if (containsWord(line, "ERROR")) {
+            result.errors += 1;
+        } else if (containsWord(line, "WARN")) {
+            result.warnings += 1;
+        }
+    }
+    return result;
+}
+
+fn outputResult(errors: usize, warnings: usize) !void {
+    const total = errors + warnings;
     const stdout = std.io.getStdOut().writer();
-    try stdout.print("{s}\n", .{json_out});
+    try stdout.print("{{\"errors\": {d}, \"warnings\": {d}, \"total\": {d}}}\n", .{ errors, warnings, total });
 }
 
 fn isAsciiAlnum(c: u8) bool {
@@ -47,7 +94,7 @@ fn isAsciiAlnum(c: u8) bool {
 fn containsWord(line: []const u8, word: []const u8) bool {
     if (word.len == 0 or line.len < word.len) return false;
     var start: usize = 0;
-    while (start <= line.len - word.len) : (start += 1) {
+    while (start <= line.len - word.len) {
         const idx_opt = std.mem.indexOfPos(u8, line, start, word);
         if (idx_opt) |idx| {
             const before_ok = (idx == 0) or !isAsciiAlnum(line[idx - 1]);

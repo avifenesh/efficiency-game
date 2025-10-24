@@ -1,3 +1,7 @@
+import sys
+import json
+from pathlib import Path
+
 fn is_ascii_alnum(c: UInt8) -> Bool:
     return (c >= 48 and c <= 57) or (c >= 65 and c <= 90) or (c >= 97 and c <= 122)
 
@@ -8,7 +12,6 @@ fn contains_word(line: String, word: String) -> Bool:
         return False
     var start: Int = 0
     while start <= bytes.size - w.size:
-        # naive search
         var match = True
         for i in range(0, w.size):
             if bytes[start + i] != w[i]:
@@ -32,19 +35,28 @@ fn count_words(line: String) -> (Int, Int):
         warnings = 1
     return (errors, warnings)
 
-fn main() raises:
-    let args = sys.argv()
-    if len(args) != 2:
-        print("Usage: mojo solution.mojo <logfile>")
-        return
-
-    with open(args[1], "r") as f:
-        var errors = 0
-        var warnings = 0
+fn process_file(path: String) -> (Int, Int):
+    var errors = 0
+    var warnings = 0
+    with open(path, "r") as f:
         for line in f:
             let (e, w) = count_words(line)
             errors += e
             warnings += w
-        
-        let total = errors + warnings
-        print('{"errors":', errors, ', "warnings":', warnings, ', "total":', total, '}')
+    return (errors, warnings)
+
+fn main() raises:
+    let args = sys.argv()
+    if len(args) != 2:
+        print("Usage: mojo solution.mojo <logfile>", file=sys.stderr)
+        sys.exit(1)
+
+    let logfile = args[1]
+    if not Path(logfile).exists():
+        print(f"Error: File not found: {logfile}", file=sys.stderr)
+        sys.exit(1)
+
+    let (errors, warnings) = process_file(logfile)
+    let total = errors + warnings
+    let result = {"errors": errors, "warnings": warnings, "total": total}
+    print(json.dumps(result))
