@@ -21,6 +21,20 @@ const LANGUAGE_COLORS = {
     perl: '#39457e'
 };
 
+function hexToRgba(hex, alpha = 1) {
+    if (!hex) return `rgba(255,255,255,${alpha})`;
+    let parsed = hex.replace('#', '');
+    if (parsed.length === 3) {
+        parsed = parsed.split('').map(ch => ch + ch).join('');
+    }
+    const intVal = parseInt(parsed, 16);
+    if (Number.isNaN(intVal)) return `rgba(255,255,255,${alpha})`;
+    const r = (intVal >> 16) & 255;
+    const g = (intVal >> 8) & 255;
+    const b = intVal & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // Load and process data
 async function loadData() {
     // Use embedded data to avoid CORS issues with file:// protocol
@@ -211,6 +225,189 @@ function createMemoryChart(languages) {
     });
 }
 
+// Create kinetic pace visualization
+function createVelocityLoop(languages) {
+    const canvas = document.getElementById('velocityCanvas');
+    const legend = document.getElementById('velocityLegend');
+    const toggleBtn = document.getElementById('loop-toggle');
+    const speedSlider = document.getElementById('loop-speed');
+    const speedLabel = document.getElementById('loop-speed-label');
+    const paceContainer = document.getElementById('paceFeedback');
+    
+    if (!canvas || !legend) return;
+    
+    const entries = Object.entries(languages);
+    if (!entries.length) return;
+    
+    const times = entries.map(([_, lang]) => lang.stats.time_avg);
+    const memories = entries.map(([_, lang]) => lang.stats.memory_avg);
+    const cpus = entries.map(([_, lang]) => lang.stats.cpu_avg ?? 0);
+    const fastest = Math.min(...times);
+    const minMemory = Math.min(...memories);
+    const maxMemory = Math.max(...memories);
+    const minCpu = Math.min(...cpus);
+    const maxCpu = Math.max(...cpus);
+    const memoryRange = maxMemory - minMemory || 1;
+    const cpuRange = maxCpu - minCpu || 1;
+    
+    const baseAngularSpeed = 2.4; // radians per second for the fastest implementation
+    
+    const runners = entries.map(([name, lang], index) => {
+        const memoryNorm = (lang.stats.memory_avg - minMemory) / memoryRange;
+        const cpuNorm = (lang.stats.cpu_avg - minCpu) / cpuRange;
+        return {
+            name,
+            label: formatLanguageName(name),
+            color: LANGUAGE_COLORS[name] || '#7b8ba0',
+            time: lang.stats.time_avg,
+            memory: lang.stats.memory_avg,
+            cpu: lang.stats.cpu_avg,
+            speed: baseAngularSpeed * (fastest / lang.stats.time_avg),
+            size: 8 + memoryNorm * 16,
+            trail: 0.4 + cpuNorm * 1.4,
+            angle: (index / entries.length) * Math.PI * 2
+        };
+    });
+    
+    legend.innerHTML = '';
+    if (paceContainer) paceContainer.innerHTML = '';
+    const legendData = [...runners].sort((a, b) => a.time - b.time);
+    legendData.forEach((runner, index) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+            <span class="legend-swatch" style="background:${runner.color}"></span>
+            <div>
+                    <div class="legend-label">${runner.label}</div>
+                    <div class="legend-meta">
+                        ${runner.time.toFixed(3)}s • ${runner.cpu?.toFixed(0) ?? '–'}% CPU • ${runner.memory.toFixed(1)} MB
+                    </div>
+                </div>
+        `;
+        legend.appendChild(item);
+        
+        if (paceContainer) {
+            const relativeSpeed = fastest / runner.time;
+            const widthPercent = Math.max(8, Math.min(100, relativeSpeed * 100));
+            const slowerPct = index === 0 ? 0 : ((runner.time - fastest) / fastest) * 100;
+            const row = document.createElement('div');
+            row.className = 'pace-row';
+            row.innerHTML = `
+                <div class="pace-label">
+                    <span class="pace-rank">#${index + 1}</span>
+                    <span>${runner.label}</span>
+                </div>
+                <div class="pace-track">
+                    <div class="pace-fill" style="width:${widthPercent.toFixed(1)}%; background:${runner.color};"></div>
+                </div>
+                <div class="pace-meta">${index === 0 ? 'Fastest' : '+' + slowerPct.toFixed(0) + '% slower'}</div>
+            `;
+            paceContainer.appendChild(row);
+        }
+    });
+    
+    const ctx = canvas.getContext('2d');
+    let pixelRatio = window.devicePixelRatio || 1;
+    
+    function resize() {
+        pixelRatio = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        canvas.width = width * pixelRatio;
+        canvas.height = height * pixelRatio;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(pixelRatio, pixelRatio);
+    }
+    
+    resize();
+    window.addEventListener('resize', resize);
+    
+    let running = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let speedMultiplier = 1;
+    let lastTime = performance.now();
+    
+    if (toggleBtn) {
+        toggleBtn.textContent = running ? 'Pause Loop' : 'Play Loop';
+        toggleBtn.addEventListener('click', () => {
+            running = !running;
+            toggleBtn.textContent = running ? 'Pause Loop' : 'Play Loop';
+        });
+    }
+    
+    if (speedSlider && speedLabel) {
+        const updateLabel = () => {
+            speedLabel.textContent = `${speedMultiplier.toFixed(1)}x`;
+        };
+        speedSlider.addEventListener('input', (event) => {
+            speedMultiplier = parseFloat(event.target.value);
+            updateLabel();
+        });
+        updateLabel();
+    }
+    
+    function render(timestamp) {
+        const now = timestamp || performance.now();
+        const delta = Math.min(0.1, (now - lastTime) / 1000);
+        lastTime = now;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radius = Math.max(120, Math.min(width, height) / 2 - 50);
+        
+        ctx.clearRect(0, 0, width, height);
+        
+        // Draw track
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 10]);
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        
+        runners.forEach(runner => {
+            if (running) {
+                runner.angle += delta * runner.speed * speedMultiplier;
+                runner.angle %= Math.PI * 2;
+            }
+            
+            const x = centerX + Math.cos(runner.angle) * radius;
+            const y = centerY + Math.sin(runner.angle) * radius;
+            
+            // Trail represents CPU usage
+            ctx.beginPath();
+            ctx.strokeStyle = hexToRgba(runner.color, 0.6);
+            ctx.lineWidth = Math.max(2, runner.size * 0.4);
+            ctx.arc(centerX, centerY, radius, runner.angle - runner.trail, runner.angle);
+            ctx.stroke();
+            
+            // Runner
+            ctx.save();
+            ctx.shadowColor = hexToRgba(runner.color, 0.9);
+            ctx.shadowBlur = 15 + runner.trail * 10;
+            ctx.fillStyle = runner.color;
+            ctx.beginPath();
+            ctx.arc(x, y, runner.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(x, y, runner.size, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+        
+        requestAnimationFrame(render);
+    }
+    
+    requestAnimationFrame(render);
+}
+
 // Create leaderboard table
 function createLeaderboard(languages) {
     const tbody = document.getElementById('leaderboard-body');
@@ -328,6 +525,7 @@ async function init() {
     
     updateMetadata(data.metadata);
     updateSummary(data.languages);
+    createVelocityLoop(data.languages);
     createTimeChart(data.languages);
     createMemoryChart(data.languages);
     createLeaderboard(data.languages);
