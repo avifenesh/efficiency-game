@@ -7,47 +7,22 @@ A comprehensive benchmark comparing the execution efficiency of multiple program
 This project measures and compares the performance (execution time, memory usage, CPU utilization) of different programming languages when processing log files to detect and count anomalies (ERROR and WARN patterns).
 
 ### Current Languages Tested (13)
-Benchmarks below reflect the medium dataset (100K log lines, 5 iterations).
+Benchmarks are captured for: C, C++, C#, Elixir, Java, Julia, Kotlin, Nim, Node.js, PHP, Python, Ruby, and Rust. The latest metrics live on the dashboard linked below.
 
-- ✅ **C** – 0.024s (fastest)
-- ✅ **Node.js** – 0.054s
-- ✅ **C#** – 0.076s
-- ✅ **Rust** – 0.090s
-- ✅ **Java** – 0.098s
-- ✅ **C++** – 0.104s
-- ✅ **Nim** – 0.134s
-- ✅ **Kotlin** – 0.150s
-- ✅ **PHP** – 0.180s
-- ✅ **Ruby** – 0.192s
-- ✅ **Python** – 0.228s
-- ✅ **Elixir** – 0.414s
-- ✅ **Julia** – 0.534s
+## 📊 Dashboard
 
-## 📊 Results
-
-View the beautiful interactive visualization:
+View the interactive benchmark dashboard:
 ```bash
 open web/index.html
 ```
 
-### Current Benchmark Results (Medium Dataset - 100K lines)
-| Rank | Language | Avg Time | Avg Memory | Speed Multiplier* |
-|------|----------|----------|------------|-------------------|
-| 🥇 | C | 0.024s | 8.37 MB | 1.0x |
-| 🥈 | Node.js | 0.054s | 64.95 MB | 2.3x |
-| 🥉 | C# | 0.076s | 46.32 MB | 3.2x |
-| 4 | Rust | 0.090s | 10.48 MB | 3.8x |
-| 5 | Java | 0.098s | 51.13 MB | 4.1x |
-| 6 | C++ | 0.104s | 12.95 MB | 4.3x |
-| 7 | Nim | 0.134s | 27.98 MB | 5.6x |
-| 8 | Kotlin | 0.150s | 58.73 MB | 6.3x |
-| 9 | PHP | 0.180s | 35.64 MB | 7.5x |
-| 10 | Ruby | 0.192s | 41.09 MB | 8.0x |
-| 11 | Python | 0.228s | 40.61 MB | 9.5x |
-| 12 | Elixir | 0.414s | 95.16 MB | 17.3x |
-| 13 | Julia | 0.534s | 273.36 MB | 22.3x |
+Or visit the published GitHub Pages site (docs synced from `web/`):
 
-\*Multiplier relative to the fastest average runtime (C).
+```
+https://avifenesh.github.io/efficiency-game/
+```
+
+Benchmark numbers are intentionally kept out of the README—use the dashboard for the latest performance snapshots.
 
 ## 🚀 Quick Start
 
@@ -98,16 +73,19 @@ efficiency-game/
 │   ├── index.html
 │   └── ...
 ├── implementations/
-│   ├── python/
-│   │   ├── solution.py
-│   │   └── run.sh
+│   ├── c/
+│   ├── cpp/
+│   ├── csharp/
+│   ├── elixir/
+│   ├── java/
+│   ├── julia/
+│   ├── kotlin/
+│   ├── nim/
 │   ├── nodejs/
-│   │   ├── solution.js
-│   │   └── run.sh
-│   └── c/
-│       ├── solution.c
-│       ├── build.sh
-│       └── run.sh
+│   ├── php/
+│   ├── python/
+│   ├── ruby/
+│   └── rust/
 ├── scripts/
 │   ├── benchmark.sh         # Benchmark orchestrator
 │   ├── generate_logs.py     # Log generator
@@ -215,32 +193,16 @@ Distribution:
 - 20% WARN messages
 - 10% ERROR messages
 
-## 🎓 Key Insights
-
-### Performance Tiers
-1. **Native Systems** (C, Rust, C++): Sub-0.11s with low memory usage
-2. **Managed Runtimes** (C#, Java, Kotlin, Node.js): 0.05–0.15s after warmup
-3. **Compiled Scripting** (Nim, PHP): 0.13–0.18s with moderate memory
-4. **Dynamic Scripting** (Ruby, Python): 0.19–0.23s, higher CPU per work unit
-5. **Concurrency Platforms** (Elixir, Julia): Favor throughput but trade raw speed
-
-### Observations
-- **C is blazing fast**: 10x faster than Python
-- **Memory efficiency**: C uses ~8x less memory than Node.js
-- **JIT warmup matters**: Node.js benefits from warmup iteration
-- **Trade-offs exist**: Speed vs. memory vs. development ease
-
 ## 🔧 Requirements
 
-### macOS
-- Xcode Command Line Tools: `xcode-select --install`
+Benchmarking every language target requires the corresponding toolchains. At minimum:
+
+- macOS with Xcode Command Line Tools (`xcode-select --install`) for GCC/Clang
 - Python 3.10+
 - Node.js 18+
-- Language-specific runtimes as needed
+- `/usr/bin/time` with BSD `-l` support (default on macOS)
 
-### Tools
-- `/usr/bin/time -l` (BSD version with -l flag)
-- Standard Unix tools (awk, sed, grep)
+To build or execute specific implementations you will also need their runtimes/compilers (e.g., Nim, .NET SDK, Java, Julia, PHP, Elixir, Rust). Install only what you plan to benchmark; languages without an available toolchain will be skipped by `benchmark.sh`.
 
 ## 📄 License
 
