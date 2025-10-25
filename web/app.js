@@ -20,6 +20,7 @@ const LANGUAGE_COLORS = {
   elixir: "#4e2a8e",
   julia: "#9558b2",
   perl: "#39457e",
+  carbon: "#1f8b4c",
 };
 
 const DATASET_PATHS = {

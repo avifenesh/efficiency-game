@@ -49,6 +49,7 @@ declare -a LANGUAGES=(
     "nodejs:no:yes:node"
     "c:yes:no:./solution"
     "cpp:yes:no:./solution"
+    "carbon:yes:no:./solution"
     "rust:yes:no:./solution"
     "java:yes:yes:java"
     "kotlin:yes:yes:java"
