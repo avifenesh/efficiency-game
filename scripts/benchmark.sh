@@ -18,6 +18,15 @@ WARMUP_RUNS=1
 COOLDOWN_SECONDS=2
 TIMEOUT=300  # 5 minutes
 
+# Determine a working timeout command (macOS often provides gtimeout via coreutils)
+if command -v timeout >/dev/null 2>&1; then
+    TIMEOUT_CMD="timeout"
+elif command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_CMD="gtimeout"
+else
+    TIMEOUT_CMD=""
+fi
+
 # Colors for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -134,69 +143,45 @@ for lang_config in "${LANGUAGES[@]}"; do
         
         TEMP_FILE=$(mktemp)
         
-        if timeout $TIMEOUT /usr/bin/time -l "$LANG_DIR/run.sh" "$LOG_FILE" > /dev/null 2> "$TEMP_FILE"; then
-            # Parse metrics from /usr/bin/time output
-            REAL_TIME_RAW=$(grep "real" "$TEMP_FILE" | awk '{print $1}' || echo "0")
-            USER_TIME_RAW=$(grep "user" "$TEMP_FILE" | awk '{print $1}' || echo "0")
-            SYS_TIME_RAW=$(grep "sys" "$TEMP_FILE" | awk '{print $1}' || echo "0")
-            MAX_MEM_RAW=$(grep "maximum resident set size" "$TEMP_FILE" | awk '{print $1}' || echo "0")
+        if ${TIMEOUT_CMD:+$TIMEOUT_CMD $TIMEOUT} /usr/bin/time -l "$LANG_DIR/run.sh" "$LOG_FILE" > /dev/null 2> "$TEMP_FILE"; then
+            # Parse metrics from /usr/bin/time -l output robustly
+            # Extract real/user/sys times from the combined line
+            read -r REAL_TIME_RAW USER_TIME_RAW SYS_TIME_RAW < <(
+                awk '/(^|[[:space:]])real([[:space:]]|$)/ && /(^|[[:space:]])user([[:space:]]|$)/ && /(^|[[:space:]])sys([[:space:]]|$)/ {
+                    rv=""; uv=""; sv="";
+                    for (i=1;i<=NF;i++) {
+                        if ($i=="real" && i>1) rv=$(i-1);
+                        if ($i=="user" && i>1) uv=$(i-1);
+                        if ($i=="sys" && i>1)  sv=$(i-1);
+                    }
+                    if (rv=="") rv=0; if (uv=="") uv=0; if (sv=="") sv=0;
+                    printf "%s %s %s\n", rv, uv, sv; exit;
+                }' "$TEMP_FILE"
+            )
 
-            METRICS_OUTPUT=$(REAL_TIME="$REAL_TIME_RAW" USER_TIME="$USER_TIME_RAW" SYS_TIME="$SYS_TIME_RAW" MAX_MEM="$MAX_MEM_RAW" python3 <<'PY'
-import os
+            # Fallbacks if combined line not found
+            REAL_TIME_RAW=${REAL_TIME_RAW:-$(grep -E "(^|[[:space:]])real([[:space:]]|$)" "$TEMP_FILE" | awk 'NR==1{print $(NF-5)}' 2>/dev/null || echo 0)}
+            USER_TIME_RAW=${USER_TIME_RAW:-$(grep -E "(^|[[:space:]])user([[:space:]]|$)" "$TEMP_FILE" | awk 'NR==1{print $(NF-3)}' 2>/dev/null || echo 0)}
+            SYS_TIME_RAW=${SYS_TIME_RAW:-$(grep -E "(^|[[:space:]])sys([[:space:]]|$)"  "$TEMP_FILE" | awk 'NR==1{print $(NF-1)}' 2>/dev/null || echo 0)}
 
-def parse_time(value: str) -> float:
-    value = (value or "").strip()
-    if not value:
-        return 0.0
-    if value.endswith('s') and value.count('m') == 1:
-        minutes, seconds = value[:-1].split('m', 1)
-        try:
-            minutes = float(minutes) if minutes else 0.0
-        except ValueError:
-            minutes = 0.0
-        try:
-            seconds = float(seconds) if seconds else 0.0
-        except ValueError:
-            seconds = 0.0
-        return minutes * 60 + seconds
-    if value.endswith('s'):
-        value = value[:-1]
-    try:
-        return float(value)
-    except ValueError:
-        return 0.0
+            # Prefer peak memory footprint, fallback to maximum resident set size (bytes)
+            MAX_MEM_RAW=$(awk 'BEGIN{IGNORECASE=1}
+                /peak memory footprint/ {print $1; found=1; exit}
+                /maximum resident set size/ && !found {print $1; exit}
+            ' "$TEMP_FILE" 2>/dev/null)
+            MAX_MEM_RAW=${MAX_MEM_RAW:-0}
 
+            # Normalize numbers and compute CPU% and memory MB using awk (no Python dependency)
+            REAL_TIME=$(awk -v v="$REAL_TIME_RAW" 'BEGIN{ if (v+0==v) printf "%.3f", v; else printf "0.000" }')
+            USER_TIME=$(awk -v v="$USER_TIME_RAW" 'BEGIN{ if (v+0==v) printf "%.3f", v; else printf "0.000" }')
+            SYS_TIME=$(awk -v v="$SYS_TIME_RAW" 'BEGIN{ if (v+0==v) printf "%.3f", v; else printf "0.000" }')
+            CPU_PCT=$(awk -v u="$USER_TIME" -v s="$SYS_TIME" -v r="$REAL_TIME" 'BEGIN{ if (r==0) printf "0.0"; else printf "%.1f", (u+s)/r*100 }')
+            MEM_MB=$(awk -v b="$MAX_MEM_RAW" 'BEGIN{ if (b+0!=b) b=0; printf "%.2f", b/1024/1024 }')
 
-def parse_bytes(value: str) -> float:
-    value = (value or "").strip()
-    if not value:
-        return 0.0
-    try:
-        return float(value)
-    except ValueError:
-        return 0.0
-
-
-real = parse_time(os.environ.get("REAL_TIME"))
-user = parse_time(os.environ.get("USER_TIME"))
-sys_time = parse_time(os.environ.get("SYS_TIME"))
-mem_bytes = parse_bytes(os.environ.get("MAX_MEM"))
-
-cpu_pct = (user + sys_time) / real * 100 if real else 0.0
-mem_mb = mem_bytes / 1024 / 1024
-
-print(f"{real:.3f}")
-print(f"{cpu_pct:.1f}")
-print(f"{mem_mb:.2f}")
-PY
-)
-
-            REAL_TIME="0.000"
-            CPU_PCT="0.0"
-            MEM_MB="0.00"
-            if [ -n "$METRICS_OUTPUT" ]; then
-                IFS=$'\n' read -r REAL_TIME CPU_PCT MEM_MB <<< "$METRICS_OUTPUT"
-            fi
+            # Final guards against empties
+            REAL_TIME=${REAL_TIME:-0.000}
+            CPU_PCT=${CPU_PCT:-0.0}
+            MEM_MB=${MEM_MB:-0.00}
             
             TIMES+=("$REAL_TIME")
             MEMORIES+=("$MEM_MB")
