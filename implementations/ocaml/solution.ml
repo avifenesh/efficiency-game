@@ -1,6 +1,6 @@
 (*
  * OCaml Concurrent Log Anomaly Counter
- * Uses Domainslib for parallel processing
+ * Sequential implementation (for Domainslib parallel version, install: opam install domainslib)
  *)
 
 let is_alnum c =
@@ -45,40 +45,8 @@ let process_file filename =
   with End_of_file ->
     close_in ic;
     let all_lines = List.rev !lines in
-
-    (* Try to use Domainslib if available, otherwise fall back to sequential *)
-    try
-      let pool = Domainslib.Task.setup_pool ~num_domains:(Domain.recommended_domain_count () - 1) () in
-      let num_domains = Domain.recommended_domain_count () in
-      let chunk_size = (List.length all_lines + num_domains - 1) / num_domains in
-
-      let rec split_chunks lst size =
-        if lst = [] then []
-        else
-          let rec take n acc l =
-            if n = 0 || l = [] then (List.rev acc, l)
-            else take (n - 1) ((List.hd l) :: acc) (List.tl l)
-          in
-          let (chunk, rest) = take size [] lst in
-          chunk :: split_chunks rest size
-      in
-
-      let chunks = split_chunks all_lines chunk_size in
-
-      let results = Domainslib.Task.run pool (fun () ->
-        Domainslib.Task.parallel_for pool ~start:0 ~finish:(List.length chunks - 1)
-          ~body:(fun i -> count_anomalies_in_chunk (List.nth chunks i))
-        |> Array.to_list
-      ) in
-
-      Domainslib.Task.teardown_pool pool;
-
-      let total_errors = List.fold_left (fun acc (e, _) -> acc + e) 0 results in
-      let total_warnings = List.fold_left (fun acc (_, w) -> acc + w) 0 results in
-      (total_errors, total_warnings)
-    with _ ->
-      (* Fallback to sequential processing *)
-      count_anomalies_in_chunk all_lines
+    (* Sequential processing *)
+    count_anomalies_in_chunk all_lines
 
 let () =
   if Array.length Sys.argv <> 2 then (
