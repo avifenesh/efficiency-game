@@ -13,7 +13,7 @@ RESULTS_FILE="$DATA_DIR/results.json"
 # Configuration
 LOG_SIZE="medium"  # small, medium, or large
 LOG_FILE="$DATA_DIR/synthetic/${LOG_SIZE}.log"
-ITERATIONS=15
+ITERATIONS=10
 WARMUP_RUNS=1
 COOLDOWN_SECONDS=2
 TIMEOUT=300  # 5 minutes
@@ -45,20 +45,27 @@ fi
 # Language configurations
 # Format: "name:needs_build:needs_warmup:run_command"
 declare -a LANGUAGES=(
+    "bash:no:no:bash"
     "python:no:no:python3"
     "nodejs:no:yes:node"
     "c:yes:no:./solution"
     "cpp:yes:no:./solution"
+    "c3:yes:no:./solution"
     "carbon:yes:no:./solution"
     "rust:yes:no:./solution"
     "java:yes:yes:java"
     "kotlin:yes:yes:java"
     "csharp:yes:no:dotnet"
+    "fsharp:yes:yes:dotnet"
     "julia:no:yes:julia"
     "elixir:no:yes:elixir"
     "ruby:no:no:ruby"
     "nim:yes:no:./solution"
     "php:no:no:php"
+    "perl:no:no:perl"
+    "fortran:yes:no:./solution"
+    "ocaml:yes:no:./solution"
+    "assembly:yes:no:./solution"
 )
 
 # Initialize results

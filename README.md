@@ -2,27 +2,21 @@
 
 A comprehensive benchmark comparing the execution efficiency of multiple programming languages through a real-world concurrent log anomaly detection task.
 
+## 📊 Live Benchmark Results
+
+**[View Interactive Dashboard →](https://avifenesh.github.io/efficiency-game/)**
+
+Explore real-time performance metrics, charts, and rankings for all languages.
+
 ## 🎯 Overview
 
 This project measures and compares the performance (execution time, memory usage, CPU utilization) of different programming languages when processing log files to detect and count anomalies (ERROR and WARN patterns).
 
-### Current Languages Tested (13)
-Benchmarks are captured for: C, C++, C#, Elixir, Java, Julia, Kotlin, Nim, Node.js, PHP, Python, Ruby, and Rust. The latest metrics live on the dashboard linked below.
+### Current Languages Tested (27)
 
-## 📊 Dashboard
+Assembly, Bash, C, C3, Carbon, C++, C#, Elixir, Erlang, Fortran, F#, Gleam, Go, Java, Julia, Kotlin, Lisp (SBCL), Lua, Nim, Node.js, OCaml, Perl, PHP, Python, Ruby, Rust, and Zig.
 
-View the interactive benchmark dashboard:
-```bash
-open web/index.html
-```
-
-Or visit the published GitHub Pages site (docs synced from `web/`):
-
-```
-https://avifenesh.github.io/efficiency-game/
-```
-
-Benchmark numbers are intentionally kept out of the README—use the dashboard for the latest performance snapshots.
+All benchmark results are available on the interactive dashboard. The latest metrics and visualizations are updated after each benchmark run.
 
 ## 🚀 Quick Start
 
@@ -45,7 +39,7 @@ chmod +x scripts/benchmark.sh
 This will:
 - Build all compiled language implementations
 - Run warmup iterations for JIT languages
-- Execute 15 measured iterations per language
+- Execute 10 measured iterations per language
 - Run a warmup pass before timing and a cooldown pause between iterations
 - Collect time, memory, and CPU metrics
 - Generate `data/results.json`
@@ -78,15 +72,20 @@ efficiency-game/
 │   ├── cpp/
 │   ├── csharp/
 │   ├── elixir/
+│   ├── erlang/
+│   ├── gleam/
 │   ├── java/
 │   ├── julia/
 │   ├── kotlin/
+│   ├── lisp/
+│   ├── lua/
 │   ├── nim/
 │   ├── nodejs/
 │   ├── php/
 │   ├── python/
 │   ├── ruby/
-│   └── rust/
+│   ├── rust/
+│   └── zig/
 ├── scripts/
 │   ├── benchmark.sh         # Benchmark orchestrator
 │   ├── generate_logs.py     # Log generator
@@ -112,7 +111,7 @@ Each implementation must:
 
 ### Benchmarking Process
 1. **Warmup**: 1 unmeasured run prior to timing (optional for languages that benefit)
-2. **Measured Runs**: 15 iterations per language with cooldown pauses
+2. **Measured Runs**: 10 iterations per language with cooldown pauses
 3. **Cooldown**: 2-second pause between iterations to stabilise resource usage
 4. **Metrics Collected**:
    - Real time (wall clock)
