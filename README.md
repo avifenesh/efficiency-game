@@ -45,7 +45,8 @@ chmod +x scripts/benchmark.sh
 This will:
 - Build all compiled language implementations
 - Run warmup iterations for JIT languages
-- Execute 5 measured iterations per language
+- Execute 15 measured iterations per language
+- Run a warmup pass before timing and a cooldown pause between iterations
 - Collect time, memory, and CPU metrics
 - Generate `data/results.json`
 - **Automatically update `web/index.html` with latest results**
@@ -110,15 +111,16 @@ Each implementation must:
 4. Output JSON: `{"errors": N, "warnings": N, "total": N}`
 
 ### Benchmarking Process
-1. **Warmup**: 1 iteration (for JIT-focused runtimes)
-2. **Measured Runs**: 5 iterations per language
-3. **Metrics Collected**:
+1. **Warmup**: 1 unmeasured run prior to timing (optional for languages that benefit)
+2. **Measured Runs**: 15 iterations per language with cooldown pauses
+3. **Cooldown**: 2-second pause between iterations to stabilise resource usage
+4. **Metrics Collected**:
    - Real time (wall clock)
    - User time (CPU in user space)
    - System time (CPU in kernel)
    - Maximum resident set size (peak memory)
    - CPU utilization percentage
-4. **Statistics**: Min, max, average, median calculated
+5. **Statistics**: Min, max, average, median calculated
 
 ### Fairness Considerations
 - Same input data for all languages

@@ -512,7 +512,7 @@ function createSprintTrack(languages) {
   resize();
   window.addEventListener("resize", resize);
 
-  let running = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let running = true;
   let speedMultiplier = 1;
   let lastTime = performance.now();
   let destroyed = false;

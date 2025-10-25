@@ -13,7 +13,9 @@ RESULTS_FILE="$DATA_DIR/results.json"
 # Configuration
 LOG_SIZE="medium"  # small, medium, or large
 LOG_FILE="$DATA_DIR/synthetic/${LOG_SIZE}.log"
-ITERATIONS=5
+ITERATIONS=15
+WARMUP_RUNS=1
+COOLDOWN_SECONDS=2
 TIMEOUT=300  # 5 minutes
 
 # Colors for output
@@ -29,6 +31,8 @@ echo ""
 echo "Configuration:"
 echo "  Log file: $LOG_FILE"
 echo "  Iterations: $ITERATIONS"
+echo "  Warmup runs: $WARMUP_RUNS"
+echo "  Cooldown: ${COOLDOWN_SECONDS}s"
 echo "  Timeout: ${TIMEOUT}s"
 echo ""
 
@@ -102,10 +106,12 @@ for lang_config in "${LANGUAGES[@]}"; do
         continue
     fi
     
-    # Warmup if needed
-    if [ "$NEEDS_WARMUP" = "yes" ]; then
-        echo "Running warmup..."
-        timeout $TIMEOUT "$LANG_DIR/run.sh" "$LOG_FILE" > /dev/null 2>&1 || true
+    # Warmup phase
+    if [ "$WARMUP_RUNS" -gt 0 ]; then
+        echo "Running warmup ($WARMUP_RUNS run(s))..."
+        for w in $(seq 1 $WARMUP_RUNS); do
+            timeout $TIMEOUT "$LANG_DIR/run.sh" "$LOG_FILE" > /dev/null 2>&1 || true
+        done
     fi
     
     # Run measured iterations
@@ -149,7 +155,15 @@ for lang_config in "${LANGUAGES[@]}"; do
         fi
         
         rm -f "$TEMP_FILE"
+        if [ "$COOLDOWN_SECONDS" -gt 0 ] && [ "$i" -lt "$ITERATIONS" ]; then
+            sleep $COOLDOWN_SECONDS
+        fi
     done
+
+    if [ "$COOLDOWN_SECONDS" -gt 0 ]; then
+        echo "Cooldown for ${COOLDOWN_SECONDS}s..."
+        sleep $COOLDOWN_SECONDS
+    fi
     
     if [ "$SUCCESS" = true ]; then
         # Calculate statistics
