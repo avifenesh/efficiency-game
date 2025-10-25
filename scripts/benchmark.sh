@@ -8,11 +8,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 IMPL_DIR="$PROJECT_ROOT/implementations"
 DATA_DIR="$PROJECT_ROOT/data"
-RESULTS_FILE="$DATA_DIR/results.json"
 
 # Configuration
-LOG_SIZE="medium"  # small, medium, or large
+LOG_SIZE="${BENCHMARK_SIZE:-medium}"  # small, medium, or large (can be set via BENCHMARK_SIZE env var)
 LOG_FILE="$DATA_DIR/synthetic/${LOG_SIZE}.log"
+RESULTS_FILE="$DATA_DIR/results-${LOG_SIZE}.json"
 ITERATIONS=10
 WARMUP_RUNS=1
 COOLDOWN_SECONDS=2
@@ -249,7 +249,7 @@ echo ""
 
 # Update web page with latest results
 echo "Updating web page..."
-if python3 "$SCRIPT_DIR/update_web.py"; then
+if python3 "$SCRIPT_DIR/update_web.py" "results-${LOG_SIZE}.json"; then
     echo -e "${GREEN}✓ Web page updated${NC}"
     echo ""
     echo "View results: open web/index.html"

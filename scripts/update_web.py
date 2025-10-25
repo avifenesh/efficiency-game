@@ -5,6 +5,7 @@ Update web/index.html with latest benchmark results from data/results.json
 
 import json
 import re
+import sys
 from pathlib import Path
 
 
@@ -27,7 +28,15 @@ def main():
     # Paths
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    results_file = project_root / 'data' / 'results.json'
+    
+    # Allow specifying results file as command-line argument
+    if len(sys.argv) > 1:
+        results_file = Path(sys.argv[1])
+        if not results_file.is_absolute():
+            results_file = project_root / 'data' / results_file
+    else:
+        results_file = project_root / 'data' / 'results.json'
+    
     html_file = project_root / 'web' / 'index.html'
 
     # Check if results file exists
