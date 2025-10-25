@@ -136,20 +136,67 @@ for lang_config in "${LANGUAGES[@]}"; do
         
         if timeout $TIMEOUT /usr/bin/time -l "$LANG_DIR/run.sh" "$LOG_FILE" > /dev/null 2> "$TEMP_FILE"; then
             # Parse metrics from /usr/bin/time output
-            REAL_TIME=$(grep "real" "$TEMP_FILE" | awk '{print $1}' || echo "0")
-            USER_TIME=$(grep "user" "$TEMP_FILE" | awk '{print $1}' || echo "0")
-            SYS_TIME=$(grep "sys" "$TEMP_FILE" | awk '{print $1}' || echo "0")
-            MAX_MEM=$(grep "maximum resident set size" "$TEMP_FILE" | awk '{print $1}' || echo "0")
-            
-            # Calculate CPU percentage: ((user + sys) / real) * 100
-            if [ "$REAL_TIME" != "0" ] && [ "$REAL_TIME" != "0.00" ]; then
-                CPU_PCT=$(echo "scale=1; ($USER_TIME + $SYS_TIME) / $REAL_TIME * 100" | bc)
-            else
-                CPU_PCT="0"
+            REAL_TIME_RAW=$(grep "real" "$TEMP_FILE" | awk '{print $1}' || echo "0")
+            USER_TIME_RAW=$(grep "user" "$TEMP_FILE" | awk '{print $1}' || echo "0")
+            SYS_TIME_RAW=$(grep "sys" "$TEMP_FILE" | awk '{print $1}' || echo "0")
+            MAX_MEM_RAW=$(grep "maximum resident set size" "$TEMP_FILE" | awk '{print $1}' || echo "0")
+
+            METRICS_OUTPUT=$(REAL_TIME="$REAL_TIME_RAW" USER_TIME="$USER_TIME_RAW" SYS_TIME="$SYS_TIME_RAW" MAX_MEM="$MAX_MEM_RAW" python3 <<'PY'
+import os
+
+def parse_time(value: str) -> float:
+    value = (value or "").strip()
+    if not value:
+        return 0.0
+    if value.endswith('s') and value.count('m') == 1:
+        minutes, seconds = value[:-1].split('m', 1)
+        try:
+            minutes = float(minutes) if minutes else 0.0
+        except ValueError:
+            minutes = 0.0
+        try:
+            seconds = float(seconds) if seconds else 0.0
+        except ValueError:
+            seconds = 0.0
+        return minutes * 60 + seconds
+    if value.endswith('s'):
+        value = value[:-1]
+    try:
+        return float(value)
+    except ValueError:
+        return 0.0
+
+
+def parse_bytes(value: str) -> float:
+    value = (value or "").strip()
+    if not value:
+        return 0.0
+    try:
+        return float(value)
+    except ValueError:
+        return 0.0
+
+
+real = parse_time(os.environ.get("REAL_TIME"))
+user = parse_time(os.environ.get("USER_TIME"))
+sys_time = parse_time(os.environ.get("SYS_TIME"))
+mem_bytes = parse_bytes(os.environ.get("MAX_MEM"))
+
+cpu_pct = (user + sys_time) / real * 100 if real else 0.0
+mem_mb = mem_bytes / 1024 / 1024
+
+print(f"{real:.3f}")
+print(f"{cpu_pct:.1f}")
+print(f"{mem_mb:.2f}")
+PY
+)
+
+            REAL_TIME="0.000"
+            CPU_PCT="0.0"
+            MEM_MB="0.00"
+            if [ -n "$METRICS_OUTPUT" ]; then
+                IFS=$'\n' read -r REAL_TIME CPU_PCT MEM_MB <<< "$METRICS_OUTPUT"
             fi
-            
-            # Convert memory from bytes to MB
-            MEM_MB=$(echo "scale=2; $MAX_MEM / 1024 / 1024" | bc)
             
             TIMES+=("$REAL_TIME")
             MEMORIES+=("$MEM_MB")
