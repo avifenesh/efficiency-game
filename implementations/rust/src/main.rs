@@ -1,16 +1,8 @@
 use std::env;
 use std::fs::File;
-use std::io::{self, BufRead};
-use std::path::Path;
-use rayon::prelude::*;
-use serde::{Serialize};
-
-#[derive(Serialize)]
-struct Results {
-    errors: usize,
-    warnings: usize,
-    total: usize,
-}
+use std::io::{self, BufRead, BufReader};
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 #[inline]
 fn is_ascii_alnum(b: u8) -> bool {
@@ -20,28 +12,45 @@ fn is_ascii_alnum(b: u8) -> bool {
 fn contains_word(line: &str, word: &str) -> bool {
     let bytes = line.as_bytes();
     let w = word.as_bytes();
-    if w.is_empty() || bytes.len() < w.len() { return false; }
+    if w.is_empty() || bytes.len() < w.len() {
+        return false;
+    }
+    
     let mut start = 0;
-    while let Some(pos) = memchr::memmem::find(&bytes[start..], w) {
-        let idx = start + pos;
-        let before_ok = idx == 0 || !is_ascii_alnum(bytes[idx - 1]);
-        let after_idx = idx + w.len();
-        let after_ok = after_idx >= bytes.len() || !is_ascii_alnum(bytes[after_idx]);
-        if before_ok && after_ok { return true; }
-        start = idx + 1;
+    while start <= bytes.len() - w.len() {
+        if let Some(pos) = bytes[start..].iter().position(|&b| b == w[0]) {
+            let idx = start + pos;
+            // Check if full word matches
+            if bytes[idx..].starts_with(w) {
+                let before_ok = idx == 0 || !is_ascii_alnum(bytes[idx - 1]);
+                let after_idx = idx + w.len();
+                let after_ok = after_idx >= bytes.len() || !is_ascii_alnum(bytes[after_idx]);
+                if before_ok && after_ok {
+                    return true;
+                }
+            }
+            start = idx + 1;
+        } else {
+            break;
+        }
     }
     false
 }
 
-fn process_chunk(chunk: &[String]) -> (usize, usize) {
-    chunk.iter().fold((0, 0), |(mut errors, mut warnings), line| {
+fn process_chunk(lines: &[String], errors: Arc<Mutex<usize>>, warnings: Arc<Mutex<usize>>) {
+    let mut local_errors = 0;
+    let mut local_warnings = 0;
+    
+    for line in lines {
         if contains_word(line, "ERROR") {
-            errors += 1;
+            local_errors += 1;
         } else if contains_word(line, "WARN") {
-            warnings += 1;
+            local_warnings += 1;
         }
-        (errors, warnings)
-    })
+    }
+    
+    *errors.lock().unwrap() += local_errors;
+    *warnings.lock().unwrap() += local_warnings;
 }
 
 fn main() -> io::Result<()> {
@@ -51,23 +60,49 @@ fn main() -> io::Result<()> {
         std::process::exit(1);
     }
 
-    let path = Path::new(&args[1]);
-    let file = File::open(&path)?;
-    let lines: Vec<String> = io::BufReader::new(file).lines().collect::<Result<_, _>>()?;
+    let file = File::open(&args[1])?;
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
 
-    let (total_errors, total_warnings) = lines
-        .par_chunks(1000)
-        .map(process_chunk)
-        .reduce(|| (0, 0), |a, b| (a.0 + b.0, a.1 + b.1));
+    let num_threads = thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(4);
+    let chunk_size = (lines.len() + num_threads - 1) / num_threads;
 
-    let results = Results {
-        errors: total_errors,
-        warnings: total_warnings,
-        total: total_errors + total_warnings,
-    };
+    let errors = Arc::new(Mutex::new(0));
+    let warnings = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
 
-    let json_output = serde_json::to_string(&results).unwrap();
-    println!("{}", json_output);
+    for i in 0..num_threads {
+        let start = i * chunk_size;
+        if start >= lines.len() {
+            break;
+        }
+        let end = ((i + 1) * chunk_size).min(lines.len());
+        
+        let chunk: Vec<String> = lines[start..end].to_vec();
+        let errors_clone = Arc::clone(&errors);
+        let warnings_clone = Arc::clone(&warnings);
+        
+        let handle = thread::spawn(move || {
+            process_chunk(&chunk, errors_clone, warnings_clone);
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    let total_errors = *errors.lock().unwrap();
+    let total_warnings = *warnings.lock().unwrap();
+    let total = total_errors + total_warnings;
+
+    // Manual JSON output (no serde dependency)
+    println!(
+        r#"{{"errors": {}, "warnings": {}, "total": {}}}"#,
+        total_errors, total_warnings, total
+    );
 
     Ok(())
 }

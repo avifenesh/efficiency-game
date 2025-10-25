@@ -24,6 +24,7 @@ fi
 missing_cmds=()
 missing_installs=()
 missing_descs=()
+optional_notes=()
 
 add_missing() {
   local cmd="$1"
@@ -75,21 +76,22 @@ if ! command -v timeout >/dev/null 2>&1; then
   fi
 fi
 
-# Perl module check: Parallel::ForkManager and Sys::CPU
-if ! perl -MParallel::ForkManager -MSys::CPU -e 1 >/dev/null 2>&1; then
-  add_missing "Perl modules" "cpan install Parallel::ForkManager Sys::CPU" "Perl dependencies for threaded implementation"
-fi
-
 # OCaml optional dependency: ocamlfind/domainslib improves performance but script falls back
-if command -v ocamlopt >/dev/null 2>&1 && ! ocamlfind printconf >/dev/null 2>&1; then
-  add_missing "ocamlfind" "opam install ocamlfind" "OCaml findlib (enables parallel build)"
+if command -v ocamlopt >/dev/null 2>&1 && ! command -v ocamlfind >/dev/null 2>&1; then
+  optional_notes+=("OCaml parallel build available after installing ocamlfind (opam install ocamlfind)")
 fi
 if command -v ocamlfind >/dev/null 2>&1 && ! ocamlfind query domainslib >/dev/null 2>&1; then
-  add_missing "domainslib" "opam install domainslib" "OCaml Domainslib (parallel runtime support)"
+  optional_notes+=("Install domainslib via opam (opam install domainslib) to enable OCaml Domainslib parallel mode")
 fi
 
 if [[ ${#missing_cmds[@]} -eq 0 ]]; then
   echo "✅ All required toolchains appear to be installed."
+  if [[ ${#optional_notes[@]} -gt 0 ]]; then
+    printf "\nOptional enhancements:\n"
+    for note in "${optional_notes[@]}"; do
+      printf "• %s\n" "$note"
+    done
+  fi
   exit 0
 fi
 
@@ -134,6 +136,13 @@ for idx in "${!missing_cmds[@]}"; do
   echo "    Install command: $install"
 
 done
+
+if [[ ${#optional_notes[@]} -gt 0 ]]; then
+  printf "\nOptional enhancements:\n"
+  for note in "${optional_notes[@]}"; do
+    printf "• %s\n" "$note"
+  done
+fi
 
 if $AUTO_INSTALL; then
   printf "\nAuto-install attempt completed. Re-run without --install to recheck.\n"

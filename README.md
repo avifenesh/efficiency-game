@@ -243,7 +243,7 @@ Because every implementation is native to its ecosystem, you’ll need the corre
 | Gleam implementation | `gleam` | `brew install gleam` |
 | Common Lisp implementation | `sbcl` | `brew install sbcl` |
 | OCaml implementation | `ocamlopt`, optional `ocamlfind`, `domainslib` | `brew install ocaml`; add `opam install ocamlfind domainslib` for parallel build |
-| Perl implementation | Modules `Parallel::ForkManager`, `Sys::CPU` | `cpan install Parallel::ForkManager Sys::CPU` |
+| Perl implementation | Core modules (`threads`, `JSON::PP`) | Bundled with system Perl |
 
 Additional notes:
 
