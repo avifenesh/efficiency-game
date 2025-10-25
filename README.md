@@ -36,6 +36,8 @@ chmod +x scripts/benchmark.sh
 ./scripts/benchmark.sh
 ```
 
+> 💡 Tip: Before the first run, execute `./scripts/check_dependencies.sh` to make sure every language toolchain is available. Pass `--install` to let it invoke Homebrew for supported packages automatically.
+
 This will:
 - Build all compiled language implementations
 - Run warmup iterations for JIT languages
@@ -68,12 +70,19 @@ efficiency-game/
 │   ├── index.html
 │   └── ...
 ├── implementations/
+│   ├── assembly/
+│   ├── bash/
 │   ├── c/
+│   ├── c3/
+│   ├── carbon/
 │   ├── cpp/
 │   ├── csharp/
 │   ├── elixir/
 │   ├── erlang/
+│   ├── fortran/
+│   ├── fsharp/
 │   ├── gleam/
+│   ├── go/
 │   ├── java/
 │   ├── julia/
 │   ├── kotlin/
@@ -81,6 +90,8 @@ efficiency-game/
 │   ├── lua/
 │   ├── nim/
 │   ├── nodejs/
+│   ├── ocaml/
+│   ├── perl/
 │   ├── php/
 │   ├── python/
 │   ├── ruby/
@@ -88,6 +99,7 @@ efficiency-game/
 │   └── zig/
 ├── scripts/
 │   ├── benchmark.sh         # Benchmark orchestrator
+│   ├── check_dependencies.sh # Toolchain helper (new)
 │   ├── generate_logs.py     # Log generator
 │   ├── publish_docs.py      # Sync web → docs
 │   └── update_web.py        # Embed latest results in dashboard
@@ -196,14 +208,49 @@ Distribution:
 
 ## 🔧 Requirements
 
-Benchmarking every language target requires the corresponding toolchains. At minimum:
+Because every implementation is native to its ecosystem, you’ll need the corresponding compilers/runtimes. A helper script ships with the repo:
 
-- macOS with Xcode Command Line Tools (`xcode-select --install`) for GCC/Clang
-- Python 3.10+
-- Node.js 18+
-- `/usr/bin/time` with BSD `-l` support (default on macOS)
+```bash
+./scripts/check_dependencies.sh         # List missing toolchains
+./scripts/check_dependencies.sh --install  # Attempt Homebrew installs when possible
+```
 
-To build or execute specific implementations you will also need their runtimes/compilers (e.g., Nim, .NET SDK, Java, Julia, PHP, Elixir, Rust). Install only what you plan to benchmark; languages without an available toolchain will be skipped by `benchmark.sh`.
+> ℹ️ The script checks for the same commands that `benchmark.sh` uses. Run it anytime your environment changes.
+
+### Toolchain checklist (macOS + Homebrew)
+
+| Languages / Purpose | Command(s) checked | Installation hint |
+| --- | --- | --- |
+| Benchmark harness & Python impl | `python3`, `bc`, `timeout` | `brew install python@3.11 bc coreutils`<br/>and symlink `gtimeout` → `timeout` (`sudo ln -sf /opt/homebrew/bin/gtimeout /usr/local/bin/timeout`) |
+| C, C++, Carbon, Assembly builds | `clang`, `clang++` | Install Apple Command Line Tools: `xcode-select --install` |
+| Bash implementation | `bash` (bundled) | preinstalled on macOS |
+| Fortran implementation | `gfortran` | `brew install gcc` |
+| C3 implementation | `c3c` | `brew install c3c` |
+| C#, F# implementations | `dotnet` | `brew install dotnet-sdk` |
+| Java implementation | `javac`, `java` | `brew install openjdk` |
+| Kotlin implementation | `kotlinc` | `brew install kotlin` (pulls in OpenJDK) |
+| Go implementation | `go` | `brew install go` |
+| Rust implementation | `cargo` | `brew install rust` |
+| Zig implementation | `zig` | `brew install zig` |
+| Julia implementation | `julia` | `brew install julia` |
+| Nim implementation | `nim` | `brew install nim` |
+| Lua implementation | `lua` | `brew install lua` |
+| Node.js implementation | `node` | `brew install node` |
+| Ruby implementation | `ruby` | `brew install ruby` |
+| PHP implementation | `php` | `brew install php` |
+| Elixir implementation | `elixir` | `brew install elixir` (installs Erlang + `escript`) |
+| Erlang implementation | `escript` | `brew install erlang` (if not already pulled in via Elixir) |
+| Gleam implementation | `gleam` | `brew install gleam` |
+| Common Lisp implementation | `sbcl` | `brew install sbcl` |
+| OCaml implementation | `ocamlopt`, optional `ocamlfind`, `domainslib` | `brew install ocaml`; add `opam install ocamlfind domainslib` for parallel build |
+| Perl implementation | Modules `Parallel::ForkManager`, `Sys::CPU` | `cpan install Parallel::ForkManager Sys::CPU` |
+
+Additional notes:
+
+- The dependency checker only reports what’s missing. Languages without a toolchain are skipped by `benchmark.sh`, so you can opt out of installs.
+- Installing Apple Command Line Tools (`xcode-select --install`) is interactive and must be done manually.
+- For OCaml, initializing opam (`brew install opam && opam init`) is recommended before installing optional packages.
+- Ensure Homebrew itself is available (`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`).
 
 ## 📄 License
 

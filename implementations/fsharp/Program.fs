@@ -46,9 +46,9 @@ let main args =
             lines
             |> Seq.toArray
             |> Array.Parallel.iter (fun line ->
-                if String.contains 'E' line && containsWord line "ERROR" then
+                if line.Contains('E') && containsWord line "ERROR" then
                     Interlocked.Increment(&errors) |> ignore
-                elif String.contains 'W' line && containsWord line "WARN" then
+                elif line.Contains('W') && containsWord line "WARN" then
                     Interlocked.Increment(&warnings) |> ignore
             )
 
