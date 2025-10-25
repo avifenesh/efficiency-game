@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Language Efficiency Race - Benchmark Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 </head>
@@ -11,15 +14,48 @@
     <div class="container">
         <!-- Hero -->
         <header class="header">
+        <div class="header-glow" aria-hidden="true"></div>
             <div class="header-content">
-                <div class="hero-text">
-                    <h1 class="title">⚡ Language Efficiency Race</h1>
-                    <p class="subtitle">Concurrent log anomaly detection benchmark</p>
+          <div class="hero-top">
+            <div class="hero-text">
+              <h1 class="title">⚡ Language Efficiency Race</h1>
+              <p class="subtitle">Concurrent log anomaly detection benchmark</p>
+            </div>
+            <div class="hero-meta">
+              <div class="meta-stack">
+                <div class="meta-line" id="metadata"></div>
+                <div class="meta-line" id="hero-summary"></div>
                 </div>
-                <div class="hero-meta">
-                    <div class="meta-line" id="metadata"></div>
-                    <div class="meta-line" id="hero-summary"></div>
+              <div class="dataset-switcher" role="group" aria-label="Dataset selector">
+                <span class="dataset-label">Dataset</span>
+                <div class="dataset-buttons">
+                  <button class="dataset-button" data-size="small">Small</button>
+                  <button class="dataset-button" data-size="medium">Medium</button>
+                  <button class="dataset-button" data-size="large">Large</button>
                 </div>
+              </div>
+              </div>
+              </div>
+              <div class="hero-insights" aria-live="polite">
+                <article class="hero-card hero-card--time">
+                  <div class="hero-card-label">Fastest runtime</div>
+                  <div class="hero-card-value" id="hero-fastest-time">0.000s</div>
+                  <div class="hero-card-lang" id="hero-fastest-language">—</div>
+                  <div class="hero-card-gap" id="hero-fastest-gap">Gap 0.000s</div>
+                </article>
+                <article class="hero-card hero-card--memory">
+                  <div class="hero-card-label">Lowest memory</div>
+                  <div class="hero-card-value" id="hero-stingiest-memory">0.00&nbsp;MB</div>
+                  <div class="hero-card-lang" id="hero-stingiest-language">—</div>
+                  <div class="hero-card-gap" id="hero-stingiest-gap">Gap 0.00&nbsp;MB</div>
+                </article>
+                <article class="hero-card hero-card--count">
+                  <div class="hero-card-label">Active languages</div>
+                  <div class="hero-card-value" id="hero-language-count">0</div>
+                  <div class="hero-card-lang" id="hero-dataset-size">— dataset · 0 iterations</div>
+                  <div class="hero-card-gap" id="hero-lines">0 log lines</div>
+                </article>
+              </div>
             </div>
         </header>
 
@@ -44,20 +80,6 @@
             <div class="velocity-legend" id="velocityLegend"></div>
         </section>
 
-        <!-- Comparison Charts -->
-        <section class="chart-section">
-            <div class="chart-header">
-                <h2 class="section-title">📊 Compare Metrics</h2>
-                <div class="chart-tabs">
-                    <button class="chart-tab active" data-chart="time">Execution Time</button>
-                    <button class="chart-tab" data-chart="memory">Memory Usage</button>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="compareChart"></canvas>
-            </div>
-        </section>
-
         <!-- Leaderboard -->
         <section class="leaderboard">
             <h2 class="section-title">🏁 Performance Leaderboard</h2>
@@ -78,6 +100,20 @@
             </div>
         </section>
 
+        <!-- Comparison Charts -->
+        <section class="chart-section">
+          <div class="chart-header">
+            <h2 class="section-title">📊 Compare Metrics</h2>
+            <div class="chart-tabs">
+              <button class="chart-tab active" data-chart="time">Execution Time</button>
+              <button class="chart-tab" data-chart="memory">Memory Usage</button>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="compareChart"></canvas>
+          </div>
+        </section>
+
 
         <!-- Footer -->
         <footer class="footer">
@@ -88,379 +124,1131 @@
 
     <script>
         // Embedded benchmark data to avoid CORS issues with file:// protocol
-        window.BENCHMARK_DATA = {
-  "metadata": {
-    "timestamp": "2025-10-24T23:26:29Z",
-    "log_size": "medium",
-    "iterations": 5
-  },
-  "languages": {
-    "python": {
-      "times": [
-        0.23,
-        0.26,
-        0.24,
-        0.25,
-        0.23
-      ],
-      "memory": [
-        40.48,
-        40.4,
-        40.29,
-        40.09,
-        39.59
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.242,
-        "memory_avg": 40.17,
-        "cpu_avg": 200.0
-      }
+          window.BENCHMARK_DATASETS = {
+            "small": {
+              "metadata": {
+              "timestamp": "2025-10-25T00:17:11Z",
+              "log_size": "small",
+              "line_count": 10000,
+              "iterations": 5
+            },
+            "languages": {
+              "python": {
+                "times": [
+                  0.24,
+                  0.21,
+                  0.22,
+                  0.2,
+                  0.2
+                ],
+                "memory": [
+                  23.23,
+                  23.42,
+                  23.42,
+                  23.54,
+                  23.6
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.214,
+                  "memory_avg": 23.44,
+                  "cpu_avg": 200
+                }
+              },
+              "nodejs": {
+                "times": [
+                  0.04,
+                  0.04,
+                  0.05,
+                  0.04,
+                  0.05
+                ],
+                "memory": [
+                  38.5,
+                  37.92,
+                  38.4,
+                  37.21,
+                  38.2
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.044,
+                  "memory_avg": 38.05,
+                  "cpu_avg": 200
+                }
+              },
+              "c": {
+                "times": [
+                  0.02,
+                  0.02,
+                  0.02,
+                  0.02,
+                  0.02
+                ],
+                "memory": [
+                  1.9,
+                  1.9,
+                  1.92,
+                  1.92,
+                  1.95
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.02,
+                  "memory_avg": 1.92,
+                  "cpu_avg": 200
+                }
+              },
+              "cpp": {
+                "times": [
+                  0.02,
+                  0.01,
+                  0.01,
+                  0.02,
+                  0.01
+                ],
+                "memory": [
+                  2.46,
+                  2.57,
+                  2.54,
+                  2.65,
+                  2.46
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.014,
+                  "memory_avg": 2.54,
+                  "cpu_avg": 200
+                }
+              },
+              "rust": {
+                "times": [
+                  0.02,
+                  0.01,
+                  0.01,
+                  0.02,
+                  0.02
+                ],
+                "memory": [
+                  2.64,
+                  2.75,
+                  2.62,
+                  2.64,
+                  2.65
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.016,
+                  "memory_avg": 2.66,
+                  "cpu_avg": 200
+                }
+              },
+              "java": {
+                "times": [
+                  0.08,
+                  0.08,
+                  0.08,
+                  0.08,
+                  0.09
+                ],
+                "memory": [
+                  42.7,
+                  42.73,
+                  42.48,
+                  41.84,
+                  42.04
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.082,
+                  "memory_avg": 42.36,
+                  "cpu_avg": 200
+                }
+              },
+              "kotlin": {
+                "times": [
+                  0.13,
+                  0.12,
+                  0.14,
+                  0.12,
+                  0.13
+                ],
+                "memory": [
+                  47.5,
+                  46.32,
+                  46.85,
+                  47.59,
+                  46.82
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.128,
+                  "memory_avg": 47.02,
+                  "cpu_avg": 200
+                }
+              },
+              "csharp": {
+                "times": [
+                  0.08,
+                  0.08,
+                  0.07,
+                  0.07,
+                  0.07
+                ],
+                "memory": [
+                  41.42,
+                  41.67,
+                  41.81,
+                  41.28,
+                  41.68
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.074,
+                  "memory_avg": 41.57,
+                  "cpu_avg": 200
+                }
+              },
+              "julia": {
+                "times": [
+                  0.53,
+                  0.54,
+                  0.54,
+                  0.55,
+                  0.52
+                ],
+                "memory": [
+                  272.82,
+                  273.53,
+                  271.6,
+                  273.25,
+                  274.14
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.536,
+                  "memory_avg": 273.07,
+                  "cpu_avg": 200
+                }
+              },
+              "elixir": {
+                "times": [
+                  0.44,
+                  0.49,
+                  0.49,
+                  0.45,
+                  0.47
+                ],
+                "memory": [
+                  92.46,
+                  91.89,
+                  95.45,
+                  95.29,
+                  96.62
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.468,
+                  "memory_avg": 94.34,
+                  "cpu_avg": 200
+                }
+              },
+              "ruby": {
+                "times": [
+                  0.15,
+                  0.11,
+                  0.11,
+                  0.11,
+                  0.12
+                ],
+                "memory": [
+                  26.68,
+                  27.01,
+                  27.57,
+                  28.06,
+                  27.14
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.12,
+                  "memory_avg": 27.29,
+                  "cpu_avg": 200
+                }
+              },
+              "nim": {
+                "times": [
+                  0.02,
+                  0.02,
+                  0.02,
+                  0.01,
+                  0.01
+                ],
+                "memory": [
+                  4.26,
+                  4.31,
+                  4.26,
+                  4.26,
+                  4.23
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.016,
+                  "memory_avg": 4.26,
+                  "cpu_avg": 200
+                }
+              },
+              "php": {
+                "times": [
+                  0.4,
+                  0.08,
+                  0.08,
+                  0.07,
+                  0.07
+                ],
+                "memory": [
+                  22.32,
+                  22.34,
+                  22.87,
+                  22.76,
+                  22.82
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.14,
+                  "memory_avg": 22.62,
+                  "cpu_avg": 200
+                }
+              }
+            }
+          },
+          "medium": {
+            "metadata": {
+              "timestamp": "2025-10-25T00:17:35Z",
+              "log_size": "medium",
+      "line_count": 100000,
+      "iterations": 5
     },
-    "nodejs": {
-      "times": [
-        0.05,
-        0.05,
-        0.06,
-        0.06,
-        0.06
-      ],
-      "memory": [
-        64.65,
-        66.56,
-        64.14,
-        64.9,
-        66.23
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.056,
-        "memory_avg": 65.3,
-        "cpu_avg": 200.0
-      }
-    },
-    "c": {
-      "times": [
-        0.03,
-        0.04,
-        0.02,
-        0.03,
-        0.02
-      ],
-      "memory": [
-        8.39,
-        8.37,
-        8.34,
-        8.45,
-        8.32
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.028,
-        "memory_avg": 8.37,
-        "cpu_avg": 200.0
-      }
-    },
-    "cpp": {
-      "times": [
-        0.05,
-        0.04,
-        0.04,
-        0.04,
-        0.04
-      ],
-      "memory": [
-        13.18,
-        13.09,
-        13.04,
-        13.18,
-        12.95
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.042,
-        "memory_avg": 13.09,
-        "cpu_avg": 200.0
-      }
-    },
-    "rust": {
-      "times": [
-        0.42,
-        0.02,
-        0.02,
-        0.02,
-        0.03
-      ],
-      "memory": [
-        10.42,
-        10.4,
-        10.54,
-        10.5,
-        10.45
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.102,
-        "memory_avg": 10.46,
-        "cpu_avg": 200.0
-      }
-    },
-    "java": {
-      "times": [
-        0.11,
-        0.1,
-        0.11,
-        0.1,
-        0.1
-      ],
-      "memory": [
-        53.18,
-        53.62,
-        53.35,
-        52.5,
-        52.6
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.104,
-        "memory_avg": 53.05,
-        "cpu_avg": 200.0
-      }
-    },
-    "kotlin": {
-      "times": [
-        0.18,
-        0.16,
-        0.15,
-        0.14,
-        0.17
-      ],
-      "memory": [
-        59.2,
-        59.84,
-        59.7,
-        57.82,
-        60.18
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.16,
-        "memory_avg": 59.35,
-        "cpu_avg": 200.0
-      }
-    },
-    "csharp": {
-      "times": [
-        0.09,
-        0.07,
-        0.08,
-        0.07,
-        0.07
-      ],
-      "memory": [
-        46.31,
-        46.35,
-        46.45,
-        46.53,
-        46.32
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.076,
-        "memory_avg": 46.39,
-        "cpu_avg": 200.0
-      }
-    },
-    "julia": {
-      "times": [
-        0.56,
-        0.57,
-        0.55,
-        0.54,
-        0.53
-      ],
-      "memory": [
-        274.42,
-        274.59,
-        273.15,
-        272.6,
-        272.5
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.55,
-        "memory_avg": 273.45,
-        "cpu_avg": 200.0
-      }
-    },
-    "elixir": {
-      "times": [
-        0.45,
-        0.45,
-        0.49,
-        0.51,
-        0.46
-      ],
-      "memory": [
-        95.95,
-        94.76,
-        93.82,
-        96.17,
-        95.87
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.472,
-        "memory_avg": 95.31,
-        "cpu_avg": 200.0
-      }
-    },
-    "ruby": {
-      "times": [
-        0.15,
-        0.17,
-        0.14,
-        0.14,
-        0.14
-      ],
-      "memory": [
-        40.75,
-        40.67,
-        40.71,
-        40.89,
-        40.71
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.148,
-        "memory_avg": 40.75,
-        "cpu_avg": 200.0
-      }
-    },
-    "nim": {
-      "times": [
-        0.05,
-        0.05,
-        0.05,
-        0.04,
-        0.05
-      ],
-      "memory": [
-        27.95,
-        27.92,
-        27.96,
-        27.85,
-        28.03
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.048,
-        "memory_avg": 27.94,
-        "cpu_avg": 200.0
-      }
-    },
-    "php": {
-      "times": [
-        0.08,
-        0.08,
-        0.08,
-        0.08,
-        0.08
-      ],
-      "memory": [
-        36.03,
-        35.9,
-        35.84,
-        36.0,
-        35.85
-      ],
-      "cpu": [
-        200.0,
-        200.0,
-        200.0,
-        200.0,
-        200.0
-      ],
-      "stats": {
-        "time_avg": 0.08,
-        "memory_avg": 35.92,
-        "cpu_avg": 200.0
+    "languages": {
+      "python": {
+        "times": [
+          0.26,
+          0.25,
+          0.24,
+          0.26,
+          0.26
+        ],
+        "memory": [
+          40.7,
+          39.9,
+          43.09,
+          41.76,
+          41.98
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.254,
+          "memory_avg": 41.49,
+          "cpu_avg": 200
+        }
+      },
+      "nodejs": {
+        "times": [
+          0.06,
+          0.06,
+          0.06,
+          0.06,
+          0.07
+        ],
+        "memory": [
+          67.68,
+          66.81,
+          67.68,
+          66.12,
+          65.17
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.062,
+          "memory_avg": 66.69,
+          "cpu_avg": 200
+        }
+      },
+      "c": {
+        "times": [
+          0.04,
+          0.04,
+          0.02,
+          0.02,
+          0.03
+        ],
+        "memory": [
+          8.46,
+          8.4,
+          8.35,
+          8.4,
+          8.42
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.03,
+          "memory_avg": 8.41,
+          "cpu_avg": 200
+        }
+      },
+      "cpp": {
+        "times": [
+          0.04,
+          0.04,
+          0.04,
+          0.04,
+          0.04
+        ],
+        "memory": [
+          13.17,
+          13.04,
+          12.95,
+          13.09,
+          13.1
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.04,
+          "memory_avg": 13.07,
+          "cpu_avg": 200
+        }
+      },
+      "rust": {
+        "times": [
+          0.03,
+          0.03,
+          0.03,
+          0.03,
+          0.03
+        ],
+        "memory": [
+          10.6,
+          10.5,
+          10.42,
+          10.45,
+          10.51
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.03,
+          "memory_avg": 10.5,
+          "cpu_avg": 200
+        }
+      },
+      "java": {
+        "times": [
+          0.1,
+          0.11,
+          0.09,
+          0.1,
+          0.1
+        ],
+        "memory": [
+          52.9,
+          52.35,
+          53.2,
+          53.5,
+          52.79
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.1,
+          "memory_avg": 52.95,
+          "cpu_avg": 200
+        }
+      },
+      "kotlin": {
+        "times": [
+          0.13,
+          0.18,
+          0.15,
+          0.16,
+          0.14
+        ],
+        "memory": [
+          58.9,
+          59.15,
+          59.78,
+          56.56,
+          59.73
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.152,
+          "memory_avg": 58.82,
+          "cpu_avg": 200
+        }
+      },
+      "csharp": {
+        "times": [
+          0.09,
+          0.08,
+          0.08,
+          0.07,
+          0.07
+        ],
+        "memory": [
+          46.57,
+          46.59,
+          46.78,
+          46.35,
+          46.31
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.078,
+          "memory_avg": 46.52,
+          "cpu_avg": 200
+        }
+      },
+      "julia": {
+        "times": [
+          0.51,
+          0.52,
+          0.53,
+          0.52,
+          0.52
+        ],
+        "memory": [
+          273.79,
+          276,
+          272.59,
+          275.43,
+          271.65
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.52,
+          "memory_avg": 273.89,
+          "cpu_avg": 200
+        }
+      },
+      "elixir": {
+        "times": [
+          0.45,
+          0.46,
+          0.47,
+          0.46,
+          0.43
+        ],
+        "memory": [
+          95.53,
+          94.98,
+          94.95,
+          95.87,
+          96.64
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.454,
+          "memory_avg": 95.59,
+          "cpu_avg": 200
+        }
+      },
+      "ruby": {
+        "times": [
+          0.13,
+          0.14,
+          0.15,
+          0.15,
+          0.13
+        ],
+        "memory": [
+          40.39,
+          40.9,
+          41.23,
+          41.32,
+          40.87
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.14,
+          "memory_avg": 40.94,
+          "cpu_avg": 200
+        }
+      },
+      "nim": {
+        "times": [
+          0.04,
+          0.04,
+          0.05,
+          0.04,
+          0.04
+        ],
+        "memory": [
+          27.96,
+          27.89,
+          28.01,
+          27.95,
+          27.85
+        ],
+        "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.042,
+          "memory_avg": 27.93,
+          "cpu_avg": 200
+        }
+      },
+      "php": {
+        "times": [
+          0.08,
+          0.08,
+          0.08,
+          0.09,
+          0.08
+        ],
+        "memory": [
+                  36.07,
+                  35.59,
+                  35.43,
+                  35.95,
+                  35.7
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.082,
+                  "memory_avg": 35.75,
+                  "cpu_avg": 200
+                }
+              }
+            }
+          },
+          "large": {
+            "metadata": {
+              "timestamp": "2025-10-25T00:17:57Z",
+              "log_size": "large",
+              "line_count": 1000000,
+              "iterations": 5
+            },
+            "languages": {
+              "python": {
+                "times": [
+                  0.46,
+                  0.42,
+                  0.46,
+                  0.42,
+                  0.43
+                ],
+                "memory": [
+                  176.57,
+                  177.79,
+                  188.17,
+                  181.92,
+                  175.18
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.438,
+                  "memory_avg": 179.93,
+                  "cpu_avg": 200
+                }
+              },
+              "nodejs": {
+                "times": [
+                  0.26,
+                  0.26,
+                  0.26,
+                  0.27,
+                  0.27
+                ],
+                "memory": [
+                  486.29,
+                  473.09,
+                  490.85,
+                  496.57,
+                  485.06
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.264,
+                  "memory_avg": 486.37,
+                  "cpu_avg": 200
+                }
+              },
+              "c": {
+                "times": [
+                  0.15,
+                  0.14,
+                  0.15,
+                  0.15,
+                  0.15
+                ],
+                "memory": [
+                  78.81,
+                  78.65,
+                  78.65,
+                  78.68,
+                  78.64
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.148,
+                  "memory_avg": 78.69,
+                  "cpu_avg": 200
+                }
+              },
+              "cpp": {
+                "times": [
+                  0.27,
+                  0.27,
+                  0.28,
+                  0.28,
+                  0.28
+                ],
+                "memory": [
+                  112.07,
+                  111.95,
+                  112,
+                  111.96,
+                  112.12
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.276,
+                  "memory_avg": 112.02,
+                  "cpu_avg": 200
+                }
+              },
+              "rust": {
+                "times": [
+                  0.14,
+                  0.13,
+                  0.14,
+                  0.14,
+                  0.15
+                ],
+                "memory": [
+                  100.43,
+                  100.46,
+                  100.5,
+                  100.48,
+                  100.46
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.14,
+                  "memory_avg": 100.47,
+                  "cpu_avg": 200
+                }
+              },
+              "java": {
+                "times": [
+                  0.18,
+                  0.17,
+                  0.17,
+                  0.17,
+                  0.16
+                ],
+                "memory": [
+                  127.96,
+                  129.59,
+                  128.95,
+                  126.75,
+                  127.4
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.17,
+                  "memory_avg": 128.13,
+                  "cpu_avg": 200
+                }
+              },
+              "kotlin": {
+                "times": [
+                  0.2,
+                  0.19,
+                  0.2,
+                  0.2,
+                  0.19
+                ],
+                "memory": [
+                  109.54,
+                  109.53,
+                  109.2,
+                  110.07,
+                  109.6
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.196,
+                  "memory_avg": 109.59,
+                  "cpu_avg": 200
+                }
+              },
+              "csharp": {
+                "times": [
+                  0.15,
+                  0.15,
+                  0.16,
+                  0.16,
+                  0.16
+                ],
+                "memory": [
+                  46.5,
+                  46.71,
+                  46.62,
+                  46.9,
+                  46.53
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.156,
+                  "memory_avg": 46.65,
+                  "cpu_avg": 200
+                }
+              },
+              "julia": {
+                "times": [
+                  0.67,
+                  0.66,
+                  0.66,
+                  0.67,
+                  0.65
+                ],
+                "memory": [
+                  356.78,
+                  355.96,
+                  357.01,
+                  359.21,
+                  356.75
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.662,
+                  "memory_avg": 357.14,
+                  "cpu_avg": 200
+                }
+              },
+              "elixir": {
+                "times": [
+                  0.69,
+                  0.73,
+                  0.67,
+                  0.72,
+                  0.7
+                ],
+                "memory": [
+                  93.67,
+                  94.89,
+                  97.84,
+                  95.87,
+                  94.85
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.702,
+                  "memory_avg": 95.42,
+                  "cpu_avg": 200
+                }
+              },
+              "ruby": {
+                "times": [
+                  0.55,
+                  0.5,
+                  0.49,
+                  0.49,
+                  0.48
+                ],
+                "memory": [
+                  189.21,
+                  190.07,
+                  189.04,
+                  190.18,
+                  191.62
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.502,
+                  "memory_avg": 190.02,
+                  "cpu_avg": 200
+                }
+              },
+              "nim": {
+                "times": [
+                  0.36,
+                  0.35,
+                  0.34,
+                  0.34,
+                  0.34
+                ],
+                "memory": [
+                  262.98,
+                  264.01,
+                  263.68,
+                  264.21,
+                  263.18
+                ],
+                "cpu": [
+                  200,
+                  200,
+                  200,
+                  200,
+                  200
+                ],
+                "stats": {
+                  "time_avg": 0.346,
+                  "memory_avg": 263.61,
+                  "cpu_avg": 200
+                }
+              },
+              "php": {
+                "times": [
+                  0.2,
+                  0.19,
+                  0.2,
+                  0.19,
+                  0.2
+                ],
+                "memory": [
+                  174.87,
+                  174.96,
+                  175.09,
+                  175.25,
+                  175.29
+                ],
+                "cpu": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "stats": {
+          "time_avg": 0.196,
+          "memory_avg": 175.09,
+          "cpu_avg": 200
+        }
       }
     }
   }
 };
+  window.BENCHMARK_DATA = window.BENCHMARK_DATASETS.medium;
     </script>
     <script src="app.js"></script>
 </body>
