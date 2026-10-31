@@ -18,20 +18,17 @@ C3 is a systems programming language based on C, designed to be an evolution of 
 ## Implementation Details
 
 ### Concurrency Approach
-Uses native threading with:
-- Thread pool based on CPU core count
-- Manual work distribution across threads
-- Result aggregation via shared result struct
+Single-threaded. Reads the file line by line with `io::treadline` and keeps running counts.
 
 ### Pattern Matching
 - Manual string search with word boundary checking
 - No regex overhead for maximum performance
 - Efficient character-by-character comparison
+- Skips the word check when a line has no `E` or `W`
 
 ### Memory Management
-- Manual memory management with `defer` for cleanup
-- Array-based line storage
-- Minimal allocations
+- Reads one line at a time into the temp allocator
+- The file is closed explicitly after the loop
 
 ## Requirements
 
@@ -73,7 +70,7 @@ Output format:
 **Expected Performance:**
 - **Speed**: Very fast - comparable to C/C++/Rust
 - **Memory**: Low memory footprint
-- **CPU**: Efficient multi-core utilization
+- **CPU**: One core (no threads)
 
 C3 is a compiled language that generates native code through LLVM, so it should perform similarly to C and C++ implementations.
 
@@ -83,18 +80,16 @@ C3 is a compiled language that generates native code through LLVM, so it should 
 module solution;
 
 // Main components:
-// 1. is_word_boundary() - Character classification
+// 1. is_alnum() - Character classification
 // 2. contains_word() - Pattern matching with boundaries
-// 3. process_chunk() - Thread worker function
-// 4. main() - Orchestration and file handling
+// 3. main() - File reading, counting and JSON output
 ```
 
 ## Notes
 
 - C3 is a relatively new language, so the ecosystem is still developing
-- The implementation uses standard library threading primitives
+- The implementation is sequential and uses no threads
 - Word boundary checking is manual for performance
-- Follows the same concurrent log processing pattern as other implementations
 
 ## Troubleshooting
 
@@ -114,7 +109,7 @@ C3 offers several improvements over C while maintaining similar performance:
 | Feature | C | C3 |
 |---------|---|-----|
 | Memory Safety | Manual | Optional checks |
-| Error Handling | Return codes | Result types (`!`) |
+| Error Handling | Return codes | Optionals (`?`) |
 | Modules | Header files | Built-in modules |
 | Generics | Macros | Compile-time generics |
 | Resource Cleanup | Manual | `defer` statements |
@@ -122,6 +117,6 @@ C3 offers several improvements over C while maintaining similar performance:
 
 ## References
 
-- C3 Documentation: https://c3-lang.org/references/docs/
+- C3 Documentation: https://c3-lang.org/getting-started/introduction/
 - C3 GitHub: https://github.com/c3lang/c3c
-- Language Specification: https://c3-lang.org/references/specification/
+- Language Specification: https://c3-lang.org/implementation-details/specification/

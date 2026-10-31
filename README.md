@@ -12,9 +12,11 @@ Explore real-time performance metrics, charts, and rankings for all languages.
 
 This project measures and compares the performance (execution time, memory usage, CPU utilization) of different programming languages when processing log files to detect and count anomalies (ERROR and WARN patterns).
 
-### Current Languages Tested (27)
+### Implementations (27)
 
 Assembly, Bash, C, C3, Carbon, C++, C#, Elixir, Erlang, Fortran, F#, Gleam, Go, Java, Julia, Kotlin, Lisp (SBCL), Lua, Nim, Node.js, OCaml, Perl, PHP, Python, Ruby, Rust, and Zig.
+
+`scripts/benchmark.sh` runs 21 of them. Erlang, Gleam, Go, Lisp, Lua and Zig have implementations but are not in its `LANGUAGES` array yet.
 
 All benchmark results are available on the interactive dashboard. The latest metrics and visualizations are updated after each benchmark run.
 
@@ -40,12 +42,14 @@ chmod +x scripts/benchmark.sh
 
 This will:
 - Build all compiled language implementations
-- Run warmup iterations for JIT languages
+- Run one warmup pass per language
 - Execute 10 measured iterations per language
-- Run a warmup pass before timing and a cooldown pause between iterations
+- Pause 2 seconds between iterations
 - Collect time, memory, and CPU metrics
-- Generate `data/results.json`
+- Generate `data/results-<size>.json`
 - **Automatically update `web/index.html` with latest results**
+
+The default dataset is `medium`. Set `BENCHMARK_SIZE=small|medium|large` to pick another. `./scripts/benchmark-all-sizes.sh` runs all three and updates the dashboard with every size.
 
 ### 3. View Results
 ```bash
@@ -65,7 +69,7 @@ efficiency-game/
 │   │   ├── small.log
 │   │   ├── medium.log
 │   │   └── large.log
-│   └── results.json         # Benchmark results
+│   └── results-{small,medium,large}.json  # Benchmark results
 ├── docs/                    # Static bundle for GitHub Pages
 │   ├── index.html
 │   └── ...
@@ -99,10 +103,12 @@ efficiency-game/
 │   └── zig/
 ├── scripts/
 │   ├── benchmark.sh         # Benchmark orchestrator
+│   ├── benchmark-all-sizes.sh # Run every dataset size
 │   ├── check_dependencies.sh # Toolchain helper (new)
 │   ├── generate_logs.py     # Log generator
 │   ├── publish_docs.py      # Sync web → docs
-│   └── update_web.py        # Embed latest results in dashboard
+│   ├── update_web.py        # Embed latest results in dashboard
+│   └── update_web_all.py    # Embed all sizes in dashboard
 ├── life/                    # Pixi environment for experimental work
 │   └── pixi.toml
 └── web/
@@ -122,7 +128,7 @@ Each implementation must:
 4. Output JSON: `{"errors": N, "warnings": N, "total": N}`
 
 ### Benchmarking Process
-1. **Warmup**: 1 unmeasured run prior to timing (optional for languages that benefit)
+1. **Warmup**: 1 unmeasured run per language prior to timing
 2. **Measured Runs**: 10 iterations per language with cooldown pauses
 3. **Cooldown**: 2-second pause between iterations to stabilise resource usage
 4. **Metrics Collected**:
@@ -131,12 +137,12 @@ Each implementation must:
    - System time (CPU in kernel)
    - Maximum resident set size (peak memory)
    - CPU utilization percentage
-5. **Statistics**: Min, max, average, median calculated
+5. **Statistics**: Per-iteration values plus averages for time, memory and CPU
 
 ### Fairness Considerations
 - Same input data for all languages
 - Same hardware (sequential execution)
-- Warmup for JIT languages (Java, C#, Kotlin, Node.js)
+- One warmup run for every language
 - Multiple iterations for statistical validity
 - No artificial resource constraints
 
@@ -146,13 +152,13 @@ Each implementation must:
 
 #### Python
 - **Concurrency**: `multiprocessing.Pool`
-- **Pattern Matching**: `re.compile()` for performance
-- **Chunk Size**: 10K lines per chunk
+- **Pattern Matching**: `bytes.find()` with word boundaries
+- **Chunk Size**: 20K lines per chunk
 
 #### Node.js
 - **Concurrency**: `worker_threads`
-- **Pattern Matching**: RegEx
-- **Workers**: CPU core count
+- **Pattern Matching**: `indexOf()` with word boundaries
+- **Workers**: up to 4 (capped by CPU core count), only for files over 50 MB or 500K lines
 
 #### C
 - **Concurrency**: `pthreads`
